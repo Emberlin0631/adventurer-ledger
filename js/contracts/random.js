@@ -31,7 +31,7 @@ function rcIntel(c) {
       rationRate: 5 + Math.max(0, S.members.length - 5), market, clause: false,
       hints: () => {
         const M = S.M;
-        M.rationDays = c.days + (T.tags.includes('far') && !M.svc.horses ? 2 : 0);
+        M.rationDays = Math.max(1, c.days + (T.tags.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') ? 1 : 0));
         const known = T.tags.concat(M.scouted && c.hidden ? [c.hidden] : []);
         return known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
       },
@@ -42,13 +42,14 @@ function rcIntel(c) {
   const target = n => t(`rc.${c.id}.target`, {n});
   const disc = c.trueN > c.stated || !!c.hidden;
   const justified = M.scouted && disc;
-  const scoutCost = 10 + 5 * c.D;
+  const scoutCost = perk('scout') ? 0 : 10 + 5 * c.D;   // Lv3 偵查手自己去看
   const bids = {low: Math.round(c.bounty * 0.85 / 10) * 10, std: c.bounty, high: Math.round(c.bounty * 1.3 / 10) * 10};
   const accept = kind => () => {
     let p = {low: 1, std: 0.85, high: justified ? 0.85 : 0.3}[kind];
     if (M.clause && !justified) p -= 0.3;
     if (M.wantAdv && S.rep < 60) p -= 0.15;
     if (kind !== 'low') p += (S.rep - 50) / 200;   // 聲望好，委託人比較好說話
+    if (kind !== 'low' && perk('cap')) p += 0.1;      // Lv3 隊長會談
     removeFromBoard(c);
     if (rnd() > p) {
       const keep = M.spent; S.M = null;
@@ -157,7 +158,7 @@ function rcFight(X, bonus) {
   if (rnd() < 0.08 * c.D) { const m = injure(1); if (m) L.push(['w', t('rc.f.hurt', {name: nm(m)})]); }
   const ratio = Math.max(0, (c.trueN - c.stated) / c.stated);
   const healer = has('heal') || has('appr');
-  const p = Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + bonus));
+  const p = Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + growthBonus() + bonus));
   const usedTxt = Object.entries(used).map(([k, n]) => `${t('inv.' + k)}×${n}`).join(t('list.sep'));
   if (usedTxt) L.push(t('rc.f.used', {list: usedTxt}));
   const loot = M.extraLoot.slice(), ded = [];

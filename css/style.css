@@ -161,3 +161,13 @@ img{max-width:100%}
 details.fire{margin-top:4px}
 details.fire summary{cursor:pointer;color:var(--muted);font-size:13px}
 details.fire summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.mem .lv{font-size:11px;font-weight:500;color:var(--teal);letter-spacing:.02em}
+.growth{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.gcard{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;background:var(--panel2);border-radius:10px;padding:12px;align-items:start}
+.gcard svg{width:44px;height:44px;border-radius:7px}
+.gbody{display:grid;gap:5px;min-width:0}
+.xpbar{height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--teal)}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.kv span:first-child{color:var(--muted);flex:none}
+.kv span:last-child{text-align:right}

@@ -24,6 +24,7 @@ function injuryWeight(m) {
   if (tr === 'reckless') w *= 2;
   if (tr === 'cautious') w *= 0.6;
   if (m.gear) w *= 0.5;
+  w *= growthInjuryFactor(m);
   return w;
 }
 function weightedPick(pool) {
@@ -94,7 +95,7 @@ function makeCandidate(role, source) {
   const tp = MEMBER_TEMPLATES[role];
   const c = {role, nk: freeName(), source, share: tp.share, trait: pick(TRAITS), fee: 40, loy: 60, hidden: false};
   if (source === 'tavern') { c.fee = 0; c.loy = 50; c.hidden = true; }
-  if (source === 'veteran') { c.fee = 20; c.loy = 65; c.trait = 'veteran'; c.share = Math.round((tp.share + 0.25) * 100) / 100; }
+  if (source === 'veteran') { c.fee = 20; c.loy = 65; c.trait = 'veteran'; c.lv = 2; c.share = Math.round((tp.share + 0.25) * 100) / 100; }
   return c;
 }
 function rollCandidates() {
@@ -111,7 +112,7 @@ function hireCandidate(c) {
   if (S.members.length >= PARTY_MAX) return toast(t('hire.full', {n: PARTY_MAX}));
   if (S.chest < c.fee) return toast(t('toast.noMoney'));
   S.chest -= c.fee;
-  const m = makeMember(c.role, c.nk); m.trait = c.trait; m.loy = c.loy; m.share = c.share;
+  const m = makeMember(c.role, c.nk); m.trait = c.trait; m.loy = c.loy; m.share = c.share; m.lv = c.lv || 1; m.xp = XP_LEVELS[m.lv - 1];
   S.members.push(m);
   S.cands = S.cands.filter(x => x !== c);
   if (c.hidden) toast(t('hire.reveal', {name: nm(m), trait: t('tr.' + c.trait)}));

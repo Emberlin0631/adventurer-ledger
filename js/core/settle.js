@@ -6,11 +6,14 @@ function deathChecks(M) {
   [...new Set(M.serious || [])].forEach(m => {
     if (m.key === 'cap' && !cfg.capDies) return;
     let p = cfg.death + 0.02 * ((M.D || 1) - 1), saved = false;
-    if (has('heal') && m.key !== 'heal' && S.inv.healmat > 0) { S.inv.healmat--; p *= 0.4; saved = true; }
+    const master = perk('heal');   // Lv3 治療者：更會處理重傷，沒有材料也能處理
+    if (has('heal') && m.key !== 'heal' && S.inv.healmat > 0) { S.inv.healmat--; p *= master ? 0.25 : 0.4; saved = true; }
+    else if (master && m.key !== 'heal') { p *= 0.6; saved = true; }
     else if (has('appr') && m.key !== 'appr') p *= 0.8;
     if (rnd() < p) { m.dead = true; dead.push(m); out.push(['b', t('dth.line', {name: nm(m)})]); }
     else if (saved) out.push(['g', t('dth.saved', {name: nm(m), healer: nm(mem('heal'))})]);
   });
+  (M.saves || []).forEach(m => { if (!dead.includes(m)) out.unshift(['g', t('gr.saved', {name: nm(m), gear: gearName(m)})]); });
   return {out, dead};
 }
 function settle(o) {
@@ -68,12 +71,16 @@ function settle(o) {
     S.chest += reimb + reserve;
     if (pool < 0) S.chest += pool;   // 沒拿到賞金卻已預支：從錢箱償還
     const perDay = tot ? dist / tot / days : 0;   // 每份額每天拿到多少
+    const amounts = new Map();
     ps.forEach(m => {
       const amt = tot ? dist * m.share / tot : 0; m.earned += amt; m.earnedY = (m.earnedY || 0) + amt;
-      if (m.debt) { const d = Math.min(m.debt, Math.floor(amt)); m.debt -= d; S.chest += d; }   // 先前預支，從分紅扣回錢箱
+      let net = amt;
+      if (m.debt) { const d = Math.min(m.debt, Math.floor(amt)); m.debt -= d; S.chest += d; net -= d; }   // 先前預支，從分紅扣回錢箱
+      amounts.set(m, Math.round(net));   // 分紅進成員自己的錢包
       if (m.key === 'cap') { S.yours += amt; S.yoursY += amt; }
       else { addLoyT(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoyT(m, -4); }
     });
+    const glog = applyGrowth(M, ps, amounts, !o.resultKey || o.resultKey === 'res.ok');
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; if (m.restNext) m.restNext = false; else m.hp = 1; } });
     if (deaths.dead.length) {
       deaths.dead.forEach(m => S.fallen.push({nk: m.nk, key: m.key, y: S.year, day: S.day, earned: Math.round(m.earned)}));
@@ -85,7 +92,8 @@ function settle(o) {
     S.records.push({y: S.year, place: M.place, nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest});
     S.M = null;
     maybeQueueRequest();
-    (o.after || goHall)();
+    const next = o.after || goHall;
+    glog.length ? growthReport(glog, next) : next();
   }
   render(true);
 }

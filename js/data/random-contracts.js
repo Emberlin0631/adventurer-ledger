@@ -34,7 +34,7 @@ function tagNeed(tag, D) {
   switch (tag) {
     case 'rot': case 'poison': return D >= 3 ? 2 : 1;
     case 'petrify': return (S.inv.mirror >= 1 ? 1 : 2) * (D >= 4 ? 2 : 1);
-    case 'fire': return D >= 3 ? 2 : 1;
+    case 'fire': return Math.max(0, (D >= 3 ? 2 : 1) - (perk('mage') ? 1 : 0));
     default: return 1;
   }
 }
@@ -47,7 +47,7 @@ function tagReady(tag, D) {
     case 'flood': return !!M.svc.guide;
     case 'far': return !!M.svc.horses;
     case 'under': return !!M.svc.mapper;
-    case 'armor': return !!M.svc.repair;
+    case 'armor': return !!M.svc.repair || perk('tank');
     case 'ambush': return has('scout') || has('tracker');
     case 'curse': return (has('heal')) && S.inv.healmat >= 1;
     case 'loot': return !!(M.svc.processor || M.svc.porters);

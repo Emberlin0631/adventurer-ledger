@@ -23,7 +23,7 @@ function goHall() {
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
   if (!S.mkt) rollMarket();
   if (S.seasonIdx < sIdx) { rollMarket(); S.cands = null; }
-  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); }
+  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); }
   fillBoard();
   saveGame();
   // 破產：錢箱連最便宜的一趟口糧都付不起
@@ -38,7 +38,7 @@ function goHall() {
     return `
     ${showIntro ? `<div class="panel"><h4>${t('hall.intro.title')}</h4><p>${t('hall.intro.body')}</p></div>` : ''}
     ${dues ? `<div class="panel"><h4>${t('dues.title')}</h4><p>${t('dues.body', {n: fmt(dues), m: S.members.length})}</p></div>` : ''}
-    <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span></div>
+    <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><div class="row"><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span>${B(t('ms.open'), membersScreen, {cls: 'ghost'})}</div></div>
     <div class="board">${notices.join('')}</div>
     <p class="muted">${t('hall.next', {d: SEASON_DAYS - (S.day - 1) % SEASON_DAYS, n: fmt(seasonDues())})}</p>
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {

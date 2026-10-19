@@ -13,7 +13,7 @@ const DIFFS = {
 const NAME_POOL = 10;
 function makeMember(key, nk) {
   const tp = MEMBER_TEMPLATES[key];
-  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false, trait: START_TRAITS[key] || null};
+  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false, trait: START_TRAITS[key] || null, lv: key === 'heal' ? 2 : 1, xp: key === 'heal' ? 30 : 0, tier: 0, purse: 0};
 }
 function newGame(diff = 'std') {
   for (const k of Object.keys(S)) delete S[k];
@@ -40,7 +40,7 @@ function loadGame() {
     const d = JSON.parse(raw);
     if (!d || d.v !== SAVE_VERSION || !d.s) return 'old';
     newGame(); Object.assign(S, d.s, {M: null});
-    S.members.forEach(m => { m.sitting = false; });
+    S.members.forEach(m => { m.sitting = false; migrateMember(m); });
     return 'ok';
   } catch (e) { return 'old'; }
 }
@@ -55,6 +55,7 @@ const roleOf = m => t('r.' + m.key);
 /* 所有受傷都經過 hurt()：重傷者記進本次任務，結算前做致死判定 */
 function hurt(m, level) {
   if (!m) return m;
+  if (level === 2 && m.hp < 2 && gearSaves(m)) { level = 1; if (S.M) (S.M.saves = S.M.saves || []).push(m); }   // 好裝備擋下致命一擊
   if (level === 2 && m.hp < 2 && S.M) (S.M.serious = S.M.serious || []).push(m);
   m.hp = Math.max(m.hp, level);
   return m;
