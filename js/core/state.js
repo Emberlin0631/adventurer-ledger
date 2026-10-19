@@ -24,6 +24,7 @@ function newGame(diff = 'std') {
     year: 1, seasonIdx: 0, board: [], uidSeq: 1, duesNote: 0,
     members: STARTING_ROSTER.map(k => makeMember(k)),
   });
+  rollMarket();
 }
 
 /* 存檔只在大廳發生，那時沒有進行中的任務（S.M 為 null） */

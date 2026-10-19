@@ -17,21 +17,22 @@ function departFees() {
 function market() {
   const M = S.M;
   const row = k => {
-    const it = ITEMS[k], name = t(`item.${k}.name`), desc = t(`item.${k}.desc`);
+    const it = ITEMS[k], name = t(`item.${k}.name`), desc = t(`item.${k}.desc`), price = priceOf(k);
     if (it.svc) {
       const on = !!M.svc[k];
-      return `<div class="item ${on ? 'on' : ''}"><span class="nm">${name}</span><span class="ds">${desc}</span><div class="ctl"><span class="pr">${silver(it.price)}</span>${B(on ? t('mk.drop') : t('mk.hire'), () => {
-        if (on) { S.chest += it.price; M.spent -= it.price; M.svc[k] = false; }
-        else { if (S.chest < it.price) return toast(t('toast.noMoney')); spend(it.price); M.svc[k] = true; }
+      return `<div class="item ${on ? 'on' : ''}"><span class="nm">${name}</span><span class="ds">${desc}</span><div class="ctl"><span class="pr">${silver(price)}</span>${B(on ? t('mk.drop') : t('mk.hire'), () => {
+        if (on) { S.chest += price; M.spent -= price; M.svc[k] = false; }
+        else { if (S.chest < price) return toast(t('toast.noMoney')); spend(price); M.svc[k] = true; }
         market();
       }, {cls: 'sq'})}</div></div>`;
     }
-    const b = M.bought[k] || 0, lim = M.stock[k] ?? 99, left = lim - b;
-    return `<div class="item ${S.inv[k] ? 'on' : ''}"><span class="nm">${name}${M.stock[k] != null ? ` <span class="muted" style="font-size:12px">${t('mk.left', {n: left})}</span>` : ''}</span><span class="ds">${desc}</span><div class="ctl"><span class="pr">${silver(it.price)}</span>${B('−', () => {
-      S.chest += it.price; M.spent -= it.price; S.inv[k]--; M.bought[k]--; market();
+    // 可買數量 = 這張委託的限購 與 本季店裡庫存 取小
+    const b = M.bought[k] || 0, lim = M.stock[k] ?? 99, left = Math.min(lim - b, shopStock(k));
+    return `<div class="item ${S.inv[k] ? 'on' : ''}"><span class="nm">${name}${trendMark(k)} <span class="muted" style="font-size:12px">${t('mk.left', {n: left})}</span></span><span class="ds">${desc}</span><div class="ctl"><span class="pr">${silver(price)}</span>${B('−', () => {
+      S.chest += price; M.spent -= price; S.inv[k]--; M.bought[k]--; S.mkt.stock[k]++; market();
     }, {cls: 'sq', dis: !b})}<span class="qty">${S.inv[k]}</span>${B('＋', () => {
-      if (S.chest < it.price) return toast(t('toast.noMoney'));
-      spend(it.price); S.inv[k]++; M.bought[k] = b + 1; market();
+      if (S.chest < price) return toast(t('toast.noMoney'));
+      spend(price); S.inv[k]++; M.bought[k] = b + 1; S.mkt.stock[k]--; market();
     }, {cls: 'sq', dis: left <= 0})}</div></div>`;
   };
   screen(() => {

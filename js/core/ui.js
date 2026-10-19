@@ -34,7 +34,14 @@ function toast(msg) {
   document.body.appendChild(d); setTimeout(() => d.remove(), 2200);
 }
 function card(title, html, choices = []) {
-  const ch = choices.map(c => B(c.label, c.fn, {sub: c.sub, dis: c.dis, cls: c.cls})).join('');
+  // 每張事件卡的選項只能按一次：按下後整張卡的按鈕都停用，避免重複扣款
+  let done = false;
+  const once = fn => () => {
+    if (done) return; done = true;
+    document.querySelectorAll('#evbox button').forEach(b => { b.disabled = true; });
+    fn();
+  };
+  const ch = choices.map(c => B(c.label, once(c.fn), {sub: c.sub, dis: c.dis, cls: c.cls})).join('');
   $('#evbox').innerHTML = `<div class="card"><h4>${title}</h4>${html}${ch ? `<div class="choices">${ch}</div>` : ''}</div>`;
   renderHUD();
 }

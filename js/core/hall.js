@@ -21,6 +21,8 @@ function goHall() {
   if (Math.floor((S.day - 1) / YEAR_DAYS) + 1 > S.year) { yearEnd(S.year); return; }
   // 換季：扣公會會費與倉儲，公告板換新
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
+  if (!S.mkt) rollMarket();
+  if (S.seasonIdx < sIdx) rollMarket();
   while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, 2)); }
   fillBoard();
   saveGame();
@@ -42,6 +44,7 @@ function goHall() {
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {
       if (S.chest < 80) return toast(t('hall.sick.toast')); S.chest -= 80; m.hp = 0; goHall();
     }, {sub: t('hall.sick.cost')})).join('')}</div></div>` : ''}
+    ${marketPanel()}
     ${hirePanel()}
     <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }
