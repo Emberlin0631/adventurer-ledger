@@ -13,7 +13,7 @@ const DIFFS = {
 const NAME_POOL = 10;
 function makeMember(key, nk) {
   const tp = MEMBER_TEMPLATES[key];
-  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false, trait: START_TRAITS[key] || null, lv: key === 'heal' ? 2 : 1, xp: key === 'heal' ? 30 : 0, tier: 0, purse: 0};
+  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false, trait: START_TRAITS[key] || null, lv: key === 'heal' ? 2 : 1, xp: key === 'heal' ? 60 : 0, tier: 0, purse: 0};
 }
 function newGame(diff = 'std') {
   for (const k of Object.keys(S)) delete S[k];

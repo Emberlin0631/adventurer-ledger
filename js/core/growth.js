@@ -1,11 +1,11 @@
 /* 成長系統：經驗值與等級、個人錢包與私人裝備
    - 每趟委託給參與者經驗值；Lv1–5，Lv3 解鎖職業專長
    - 分紅進成員自己的錢包；成員依個性自行升級私人裝備（屬於本人，死亡歸繼承人，解約帶走） */
-const XP_LEVELS = [0, 30, 80, 150, 250];          // 到達 Lv1..Lv5 所需累計經驗
+const XP_LEVELS = [0, 60, 180, 400, 800];          // 到達 Lv1..Lv5 所需累計經驗
 const LV_MAX = 5;
-const GEAR_COST = [60, 140, 280];                 // 升到第 1/2/3 階的價格（再乘物價）
+const GEAR_COST = [100, 300, 700];                 // 升到第 1/2/3 階的價格（再乘物價）
 const GEAR_MAX = 3;
-const LIVING_COST = 10;                           // 每季從個人錢包扣的生活費
+const LIVING_COST = 20;                           // 每季從個人錢包扣的生活費
 const BUY_MARGIN = {greedy: 1.6, frugal: 1.3, reckless: 1.0};   // 存到價格的幾倍才肯買
 
 const lvOf = m => m.lv || 1;
@@ -18,7 +18,7 @@ const perk = (key, minLv = 3) => participants().some(m => m.key === key && m.hp 
 /* 對整隊的影響 */
 function growthBonus() {
   const b = participants().reduce((a, m) => a + (lvOf(m) - 1) * 0.01 + tierOf(m) * 0.01, 0);
-  return Math.min(0.15, b);
+  return Math.min(0.12, b);
 }
 /* 對個人的影響：等級與裝備都讓人比較不容易被打中 */
 const growthInjuryFactor = m => Math.pow(0.9, lvOf(m) - 1) * (1 - 0.15 * tierOf(m));
@@ -36,7 +36,7 @@ function migrateMember(m) {
 /* 任務結束：經驗值、錢包、出師、自行購買裝備。回傳成長紀錄 */
 function applyGrowth(M, ps, amounts, success) {
   const log = [], D = M.D || 1;
-  const base = 8 + 4 * D, mult = success ? 1.5 : 0.6;
+  const base = 6 + 3 * D, mult = success ? 1.5 : 0.6;
   ps.forEach(m => {
     if (m.dead) return;
     migrateMember(m);
