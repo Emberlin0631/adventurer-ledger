@@ -1,17 +1,19 @@
 /* 遊戲狀態、成員工具、存讀檔 */
 const SAVE_KEY = 'adventurer-ledger-save';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
+const SEASON_DAYS = 30, YEAR_DAYS = 120;
 const S = {};
 
 function makeMember(key) {
   const tp = MEMBER_TEMPLATES[key];
-  return {key, nk: tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, sitting: false};
+  return {key, nk: tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false};
 }
 function newGame() {
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, {
     day: 1, chest: 500, rep: 50, inv: {antidote: 0, antipetri: 0, mirror: 0, crystal: 0, healmat: 0},
-    bones: 0, progress: 0, flags: {}, records: [], yours: 0, M: null, pending: [], started: false,
+    bones: 0, progress: 0, flags: {}, records: [], yours: 0, yoursY: 0, M: null, pending: [], started: false,
+    year: 1, seasonIdx: 0, board: [], uidSeq: 1, duesNote: 0,
     members: STARTING_ROSTER.map(makeMember),
   });
 }
@@ -39,6 +41,7 @@ const has = k => S.members.some(m => m.key === k && !m.sitting && m.hp < 2);
 const mem = k => S.members.find(m => m.key === k);
 const participants = () => S.members.filter(m => !m.sitting);
 const nm = m => m ? t(m.nk) : t('someone');
+const missionName = M => t(M.nameKey, M.place != null ? {place: t('place.' + M.place)} : undefined);
 const roleOf = m => t('r.' + m.key);
 function injure(level, prefer) {
   let pool = participants().filter(m => m.hp < 2);

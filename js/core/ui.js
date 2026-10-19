@@ -59,8 +59,8 @@ function portrait(m) {
 }
 
 function dateText() {
-  const d = S.day - 1, y = Math.floor(d / 360) + 1;
-  return t('date', {y, s: t('season.' + (Math.floor(d / 90) % 4)), d: d % 90 + 1});
+  const d = S.day - 1, y = Math.floor(d / YEAR_DAYS) + 1;
+  return t('date', {y, s: t('season.' + (Math.floor(d / SEASON_DAYS) % 4)), d: d % SEASON_DAYS + 1});
 }
 function renderHUD() {
   $('#date').innerHTML = dateText();

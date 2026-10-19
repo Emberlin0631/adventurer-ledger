@@ -8,7 +8,7 @@ function c2Intel() {
   if (!S.M || S.M.id !== 'c2') newMission({
     id: 'c2', nameKey: 'c2.name', bounty: 600, rationDays: 3, market: ['repair', 'antipetri', 'mirror', 'mapper', 'crystal', 'healmat'], stock: {antipetri: 4},
     hints: () => [[S.inv.antipetri >= 3, 'c2.h1'], [S.inv.mirror >= 2, 'c2.h2'], [S.M.svc.mapper, 'c2.h3'], [S.inv.crystal >= 2, 'c2.h4'], [has('heal') && S.inv.healmat >= 1, 'c2.h5']],
-    go: c2Go, back: null,
+    go: c2Go, back: null, cancel: true,
   });
   const M = S.M;
   const accept = b => () => { M.bounty = b; M.escrow = b; M.clause = false; market(); };

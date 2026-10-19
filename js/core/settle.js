@@ -11,7 +11,8 @@ function settle(o) {
   const rest = pool - reimb;
   const ps = participants();
   const tot = ps.reduce((a, m) => a + m.share, 0);
-  let rate = rest > 0 ? 0.15 : 0;
+  let rate = rest > 0 ? 0.2 : 0;
+  const days = Math.max(1, S.day - (M.startDay || S.day));
   const title = o.title || t(o.titleKey), intro = o.introKey ? t(o.introKey) : '', note = o.note || (o.noteKey ? t(o.noteKey) : '');
 
   function lines() {
@@ -34,6 +35,7 @@ function settle(o) {
     const tail = rest > 0 ? `
       <div class="ln neg" ${st()}><span>${t('st.reserve')}</span><span>−${fmt(reserve)}</span></div>
       <div class="ln sum" ${st()}><span>${t('st.dist')}</span><span>${fmt(dist)}</span></div>
+      ${S.chest + reimb + reserve < seasonDues() + 150 ? `<div class="ln note" ${st()}><span>${t('st.lowChest', {n: fmt(S.chest + reimb + reserve)})}</span><span></span></div>` : ''}
       <div class="slider"><label for="rate">${t('st.rate')} <b class="num">${Math.round(rate * 100)}%</b></label><input id="rate" type="range" min="0" max="40" step="5" value="${Math.round(rate * 100)}"></div>
       <div class="shares num"><span class="h">${t('st.hMember')}</span><span class="h">${t('st.hRole')}</span><span class="h">${t('st.hShare')}</span><span class="h">${t('st.hAmt')}</span>
         ${ps.map(m => `<span>${nm(m)}</span><span>${roleOf(m)}</span><span>${m.share}</span><span>${fmt(dist * m.share / tot)}</span>`).join('')}</div>`
@@ -48,14 +50,14 @@ function settle(o) {
   }
   function apply(reserve, dist) {
     S.chest += reimb + reserve;
-    const per = tot ? dist / tot : 0;
+    const perDay = tot ? dist / tot / days : 0;   // 每份額每天拿到多少
     ps.forEach(m => {
-      const amt = tot ? dist * m.share / tot : 0; m.earned += amt;
-      if (m.key === 'cap') S.yours += amt;
-      else { addLoy(m, per >= 60 ? 5 : per >= 30 ? 2 : -6); if (m.hp === 2) addLoy(m, -4); }
+      const amt = tot ? dist * m.share / tot : 0; m.earned += amt; m.earnedY = (m.earnedY || 0) + amt;
+      if (m.key === 'cap') { S.yours += amt; S.yoursY += amt; }
+      else { addLoy(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoy(m, -4); }
     });
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; m.hp = 1; } });
-    S.records.push({nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest});
+    S.records.push({y: S.year, place: M.place, nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest});
     S.M = null;
     (o.after || goHall)();
   }

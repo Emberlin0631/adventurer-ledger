@@ -35,19 +35,20 @@ function market() {
     }, {cls: 'sq', dis: left <= 0})}</div></div>`;
   };
   screen(() => {
-    const fees = departFees(), ft = fees.reduce((a, f) => a + f[1], 0);
     const hints = M.hints();
+    const fees = departFees(), ft = fees.reduce((a, f) => a + f[1], 0);
     return `
-    <div><h2>${t('mk.title')}</h2><p class="lede">${t('mk.lede', {name: t(M.nameKey)})}</p></div>
+    <div><h2>${t('mk.title')}</h2><p class="lede">${t('mk.lede', {name: missionName(M)})}</p></div>
     <div class="split">
       <div class="shop">${M.market.map(row).join('')}</div>
       <div style="display:grid;gap:14px">
-        <div class="panel"><h4>${t('mk.check')}</h4><ul class="checks">${hints.map(h => `<li class="${h[0] ? 'ok' : ''}">${t(h[1])}</li>`).join('')}</ul></div>
+        <div class="panel"><h4>${t('mk.check')}</h4><ul class="checks">${hints.map(h => `<li class="${h[0] ? 'ok' : ''}">${h[2] ? h[1] : t(h[1])}</li>`).join('')}</ul></div>
         <div class="panel"><h4>${t('mk.pay')}</h4><div class="fees num">${fees.map(f => `<div><span>${f[0]} <span class="muted">${f[2] || ''}</span></span><span>${silver(f[1])}</span></div>`).join('')}
           <div class="tot"><span>${t('mk.spent')}</span><span>${silver(M.spent)}</span></div>
           <div><span>${t('mk.after')}</span><span style="color:${S.chest - ft < 0 ? 'var(--bad)' : 'var(--brass)'}">${silver(S.chest - ft)}</span></div></div>
           ${B(t('mk.go'), depart, {cls: 'pri', dis: S.chest < ft, sub: S.chest < ft ? t('mk.goSubNo') : t('mk.goSub')})}
           ${M.back ? B(t('mk.back'), M.back) : ''}
+          ${M.cancel ? B(t('mk.cancel'), () => { S.rep -= 3; S.M = null; goHall(); }, {sub: t('mk.cancelSub')}) : ''}
         </div>
       </div>
     </div>`;
@@ -57,6 +58,7 @@ function depart() {
   const M = S.M, fees = departFees(), ft = fees.reduce((a, f) => a + f[1], 0);
   if (S.chest < ft) return toast(t('toast.noMoney'));
   spend(ft);
+  M.startDay = S.day;
   S.members.forEach(m => { if (m.hp === 1) m.hp = 0; m.sitting = m.hp === 2; });
   M.go();
 }

@@ -4,9 +4,11 @@ const BIOME = {
   cellar: {sky: ['#1b1714', '#2c2420'], hill: '#3a302a', ground: '#463a30', ground2: '#2f2620'},
   road:   {sky: ['#4b5f78', '#c59a6a'], hill: '#4a4f3a', ground: '#7a6a48', ground2: '#5b4e34'},
   grave:  {sky: ['#20263a', '#4e4d62'], hill: '#2a2d36', ground: '#3a3d35', ground2: '#2a2c26'},
+  forest: {sky: ['#2f4038', '#77806a'], hill: '#24322a', ground: '#3b4630', ground2: '#2a3322'},
+  mine:   {sky: ['#141312', '#26221e'], hill: '#2e2924', ground: '#3d3630', ground2: '#2a2520'},
 };
 function expedition(o) {
-  screen(`<div class="exp"><canvas id="cv"></canvas><div class="exp-day" id="expday">${t('exp.depart')}</div></div><div id="evbox" class="evbox"><div class="card"><h4>${t(S.M.nameKey)}</h4><p class="muted">${t('exp.leave')}</p></div></div>`);
+  screen(`<div class="exp"><canvas id="cv"></canvas><div class="exp-day" id="expday">${t('exp.depart')}</div></div><div id="evbox" class="evbox"><div class="card"><h4>${missionName(S.M)}</h4><p class="muted">${t('exp.leave')}</p></div></div>`);
   const cv = $('#cv'), g = cv.getContext('2d');
   const X = {days: o.days, day: 0, paused: false, walking: true, off: 0, monster: 0, flash: 0, stop: false, extras: o.extras || 0, o};
   EXP = X;
@@ -64,6 +66,16 @@ function draw(g, cv, X, o, now, dpr) {
     g.fillStyle = '#5b5e66';
     for (let i = -1; i < W / 70 + 2; i++) { const x = i * 70 - (X.off * 0.8 % 70) + 10; g.beginPath(); g.moveTo(x, 160); g.lineTo(x, 138); g.arc(x + 9, 138, 9, Math.PI, 0); g.lineTo(x + 18, 160); g.fill(); }
   }
+  if (o.biome === 'forest') {
+    for (let i = -1; i < W / 60 + 2; i++) { const x = i * 60 - (X.off * 0.7 % 60) + (i % 3) * 9, h = 70 + (i % 4) * 14;
+      g.fillStyle = '#3a2c20'; g.fillRect(x + 8, 160 - h * 0.4, 5, h * 0.4);
+      g.fillStyle = i % 2 ? '#2d4a35' : '#35553c'; g.beginPath(); g.moveTo(x - 6, 160 - h * 0.35); g.lineTo(x + 10, 160 - h); g.lineTo(x + 27, 160 - h * 0.35); g.fill(); }
+  }
+  if (o.biome === 'mine') {
+    g.strokeStyle = '#5a4630'; g.lineWidth = 6;
+    for (let i = -1; i < W / 140 + 2; i++) { const x = i * 140 - (X.off * 0.6 % 140); g.beginPath(); g.moveTo(x, 160); g.lineTo(x, 50); g.lineTo(x + 90, 50); g.lineTo(x + 90, 160); g.stroke(); }
+    g.fillStyle = 'rgba(240,190,90,.55)'; for (let i = -1; i < W / 140 + 2; i++) { const x = i * 140 - (X.off * 0.6 % 140) + 45; g.beginPath(); g.arc(x, 64, 4, 0, 7); g.fill(); }
+  }
   g.fillStyle = b.ground; g.fillRect(-5, 158, W + 10, H - 158);
   g.fillStyle = b.ground2; for (let i = -1; i < W / 40 + 2; i++) { const x = i * 40 - (X.off % 40); g.fillRect(x, 170 + (i % 3) * 9, 18, 3); }
   if (o.biome === 'swamp') {
@@ -101,6 +113,20 @@ function drawMonster(g, type, x, y, now) {
     g.fillStyle = '#c9c06a'; g.beginPath(); g.moveTo(x + 80, y - 78 + br); g.lineTo(x + 74, y - 66); g.lineTo(x + 86, y - 66); g.fill();
     g.fillStyle = 'rgba(120,90,70,.75)'; g.beginPath(); g.moveTo(x + 20, y - 40); g.lineTo(x + 50, y - 80 + br * 2); g.lineTo(x + 62, y - 38); g.fill();
     g.fillStyle = '#f0d070'; g.fillRect(x - 7, y - 41 + br, 3, 2);
+  } else if (type === 'wolf') {
+    for (let i = 0; i < 4; i++) { const ox = x + i * 28, oy = y - (i % 2) * 2; g.fillStyle = i % 2 ? '#7d7f84' : '#66686e';
+      g.beginPath(); g.ellipse(ox, oy - 12 + br * .5, 13, 6, 0, 0, 7); g.fill(); g.beginPath(); g.moveTo(ox - 11, oy - 15); g.lineTo(ox - 22, oy - 13); g.lineTo(ox - 13, oy - 8); g.fill();
+      g.beginPath(); g.moveTo(ox - 14, oy - 16); g.lineTo(ox - 12, oy - 22); g.lineTo(ox - 9, oy - 16); g.fill(); g.fillRect(ox - 9, oy - 8, 3, 8); g.fillRect(ox + 7, oy - 8, 3, 8);
+      g.strokeStyle = g.fillStyle; g.lineWidth = 3; g.beginPath(); g.moveTo(ox + 12, oy - 13); g.lineTo(ox + 20, oy - 18); g.stroke(); g.fillStyle = '#f0e070'; g.fillRect(ox - 17, oy - 15, 2, 2); }
+  } else if (type === 'bandit') {
+    for (let i = 0; i < 4; i++) { const ox = x + i * 20, oy = y; g.fillStyle = ['#5a4a3a', '#4a4038', '#6a5040', '#504840'][i];
+      g.fillRect(ox - 5, oy - 20, 10, 15); g.fillRect(ox - 4, oy - 6, 3, 6); g.fillRect(ox + 1, oy - 6, 3, 6);
+      g.fillStyle = '#c9a07a'; g.beginPath(); g.arc(ox, oy - 25, 5, 0, 7); g.fill(); g.fillStyle = '#2a2420'; g.fillRect(ox - 5, oy - 27, 10, 3);
+      g.strokeStyle = '#bfc6cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(ox - 7, oy - 14); g.lineTo(ox - 14, oy - 26 + br); g.stroke(); }
+  } else if (type === 'toad') {
+    for (let i = 0; i < 4; i++) { const ox = x + i * 26, oy = y - Math.abs(Math.sin(now / 400 + i)) * 4; g.fillStyle = i % 2 ? '#6f7d3a' : '#5b6a30';
+      g.beginPath(); g.ellipse(ox, oy - 8, 12, 9, 0, 0, 7); g.fill(); g.fillStyle = '#c9b84a'; g.beginPath(); g.arc(ox - 6, oy - 15, 3, 0, 7); g.arc(ox + 4, oy - 15, 3, 0, 7); g.fill();
+      g.fillStyle = 'rgba(160,200,90,.5)'; g.beginPath(); g.arc(ox + 8, oy - 4, 2, 0, 7); g.fill(); }
   } else if (type === 'goose') {
     for (let i = 0; i < 4; i++) { const ox = x + i * 24, oy = y - 30 - Math.sin(now / 250 + i) * 6; g.fillStyle = 'rgba(200,210,235,.6)'; g.beginPath(); g.ellipse(ox, oy, 9, 6, 0, 0, 7); g.fill(); g.beginPath(); g.moveTo(ox - 6, oy - 2); g.quadraticCurveTo(ox - 12, oy - 14, ox - 16, oy - 12); g.lineWidth = 3; g.strokeStyle = 'rgba(200,210,235,.6)'; g.stroke(); }
   }
