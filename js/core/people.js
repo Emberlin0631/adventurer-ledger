@@ -64,19 +64,19 @@ registerEvent('request', () => {
   const build = () => { let choices = '';
   if (r.type === 'raise') {
     const bonus = 30;
-    choices = B(t('rq.raise.a'), () => { m.share = Math.round((m.share + 0.25) * 100) / 100; addLoy(m, 15); done(); }, {cls: 'pri', sub: t('rq.raise.aSub', {s: m.share + 0.25})})
+    choices = B(t('rq.raise.a'), () => { m.share = Math.round((m.share + 0.25) * 100) / 100; addLoy(m, 15); done(); }, {sub: t('rq.raise.aSub', {s: m.share + 0.25})})
       + B(t('rq.raise.bonus', {n: bonus}), () => { S.yours -= bonus; S.yoursY -= bonus; addLoy(m, 8); done(); }, {sub: t('rq.raise.bSub')})
       + B(t('rq.no'), () => { addLoyT(m, -8); done(); }, {sub: t('rq.noSub', {n: 8})});
   } else if (r.type === 'advance') {
     const amt = 40;
-    choices = B(t('rq.advance.a', {n: amt}), () => { if (S.chest < amt) return toast(t('toast.noMoney')); S.chest -= amt; m.debt = amt; addLoy(m, 6); done(); }, {cls: 'pri', sub: t('rq.advance.aSub')})
+    choices = B(t('rq.advance.a', {n: amt}), () => { if (S.chest < amt) return toast(t('toast.noMoney')); S.chest -= amt; m.debt = amt; addLoy(m, 6); done(); }, {sub: t('rq.advance.aSub')})
       + B(t('rq.no'), () => { addLoyT(m, -4); done(); }, {sub: t('rq.noSub', {n: 4})});
   } else if (r.type === 'rest') {
-    choices = B(t('rq.rest.a'), () => { m.restNext = true; addLoy(m, 10); done(); }, {cls: 'pri', sub: t('rq.rest.aSub')})
+    choices = B(t('rq.rest.a'), () => { m.restNext = true; addLoy(m, 10); done(); }, {sub: t('rq.rest.aSub')})
       + B(t('rq.no'), () => { addLoyT(m, -6); done(); }, {sub: t('rq.noSub', {n: 6})});
   } else if (r.type === 'gear') {
     const cost = Math.round(80 * inflation());
-    choices = B(t('rq.gear.a', {n: cost}), () => { if (S.chest < cost) return toast(t('toast.noMoney')); S.chest -= cost; m.gear = true; addLoy(m, 6); done(); }, {cls: 'pri', sub: t('rq.gear.aSub')})
+    choices = B(t('rq.gear.a', {n: cost}), () => { if (S.chest < cost) return toast(t('toast.noMoney')); S.chest -= cost; m.gear = true; addLoy(m, 6); done(); }, {sub: t('rq.gear.aSub')})
       + B(t('rq.no'), () => { addLoyT(m, -4); done(); }, {sub: t('rq.noSub', {n: 4})});
   }
   return `${head()}<div class="choices">${choices}</div>`; };

@@ -70,7 +70,7 @@ function settle(o) {
     const perDay = tot ? dist / tot / days : 0;   // 每份額每天拿到多少
     ps.forEach(m => {
       const amt = tot ? dist * m.share / tot : 0; m.earned += amt; m.earnedY = (m.earnedY || 0) + amt;
-      if (m.debt) { const d = Math.min(m.debt, amt); m.debt -= d; S.chest += d; }   // 先前預支，從分紅扣回錢箱
+      if (m.debt) { const d = Math.min(m.debt, Math.floor(amt)); m.debt -= d; S.chest += d; }   // 先前預支，從分紅扣回錢箱
       if (m.key === 'cap') { S.yours += amt; S.yoursY += amt; }
       else { addLoyT(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoyT(m, -4); }
     });
