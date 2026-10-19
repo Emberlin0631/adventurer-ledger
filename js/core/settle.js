@@ -1,7 +1,21 @@
 /* 結算帳：工會費 → 預支 → 戰利品與扣項 → 返還支出 → 提撥儲備 → 依份額分紅
    o: {titleKey|title, bounty, loot:[[label, amt]], ded:[[label, amt]], introKey, noteKey|note, resultKey, after} */
+/* 重傷致死判定：治療者帶高階材料能在 12 小時內處理，大幅降低機率 */
+function deathChecks(M) {
+  const out = [], dead = [], cfg = DIFFS[S.diff || 'std'];
+  [...new Set(M.serious || [])].forEach(m => {
+    if (m.key === 'cap' && !cfg.capDies) return;
+    let p = cfg.death + 0.02 * ((M.D || 1) - 1), saved = false;
+    if (has('heal') && m.key !== 'heal' && S.inv.healmat > 0) { S.inv.healmat--; p *= 0.4; saved = true; }
+    else if (has('appr') && m.key !== 'appr') p *= 0.8;
+    if (rnd() < p) { m.dead = true; dead.push(m); out.push(['b', t('dth.line', {name: nm(m)})]); }
+    else if (saved) out.push(['g', t('dth.saved', {name: nm(m), healer: nm(mem('heal'))})]);
+  });
+  return {out, dead};
+}
 function settle(o) {
   const M = S.M; screen('');
+  const deaths = deathChecks(M);
   const fee = Math.round((o.bounty || 0) * 0.05);
   const adv = M.advance || 0;
   const loot = (o.loot || []).reduce((a, l) => a + l[1], 0), ded = (o.ded || []).reduce((a, l) => a + l[1], 0);
@@ -38,9 +52,10 @@ function settle(o) {
       ${S.chest + reimb + reserve < seasonDues() + 150 ? `<div class="ln note" ${st()}><span>${t('st.lowChest', {n: fmt(S.chest + reimb + reserve)})}</span><span></span></div>` : ''}
       <div class="slider"><label for="rate">${t('st.rate')} <b class="num">${Math.round(rate * 100)}%</b></label><input id="rate" type="range" min="0" max="40" step="5" value="${Math.round(rate * 100)}"></div>
       <div class="shares num"><span class="h">${t('st.hMember')}</span><span class="h">${t('st.hRole')}</span><span class="h">${t('st.hShare')}</span><span class="h">${t('st.hAmt')}</span>
-        ${ps.map(m => `<span>${nm(m)}</span><span>${roleOf(m)}</span><span>${m.share}</span><span>${fmt(dist * m.share / tot)}</span>`).join('')}</div>`
+        ${ps.map(m => `<span>${nm(m)}${m.dead ? ` <span class="muted">${t('dth.heir')}</span>` : ''}</span><span>${roleOf(m)}</span><span>${m.share}</span><span>${fmt(dist * m.share / tot)}</span>`).join('')}</div>`
       : `<div class="ln note" ${st()}><span>${loss > 0 ? t('st.loss', {n: fmt(loss)}) : t('st.even')}</span><span></span></div>`;
     $('#main').innerHTML = `<div><h2>${title}</h2>${intro ? `<p class="lede">${intro}</p>` : ''}</div>
+      ${deaths.out.length ? `<div class="card" style="border-left-color:${deaths.dead.length ? 'var(--wax)' : 'var(--good)'}"><h4>${t(deaths.dead.length ? 'dth.title' : 'dth.titleSaved')}</h4>${res(deaths.out)}</div>` : ''}
       <div class="ledger"><h3>${t('st.ledger')}</h3>${lh}${tail}${note ? `<div class="ln note" ${st()}><span>${note}</span><span></span></div>` : ''}</div>
       <div class="row" id="sbtn"></div>`;
     clearReg();
@@ -57,6 +72,13 @@ function settle(o) {
       else { addLoy(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoy(m, -4); }
     });
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; m.hp = 1; } });
+    if (deaths.dead.length) {
+      deaths.dead.forEach(m => S.fallen.push({nk: m.nk, key: m.key, y: S.year, day: S.day, earned: Math.round(m.earned)}));
+      S.members = S.members.filter(m => !m.dead);
+      if (deaths.dead.some(m => m.key === 'cap')) { S.records.push({y: S.year, place: M.place, nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest}); S.M = null; captainDied(); return; }
+      S.deadPending = deaths.dead.map(m => ({nk: m.nk, key: m.key, share: m.share}));
+      S.pending.unshift('funeral');
+    }
     S.records.push({y: S.year, place: M.place, nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest});
     S.M = null;
     (o.after || goHall)();

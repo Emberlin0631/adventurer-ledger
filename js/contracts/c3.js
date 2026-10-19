@@ -6,7 +6,7 @@ registerContract({
 
 function c3Intel() {
   if (!S.M || S.M.id !== 'c3') newMission({
-    id: 'c3', nameKey: 'c3.name', bounty: 3000, rationDays: 6, rationRate: 7, danger: true,
+    id: 'c3', D: 3, nameKey: 'c3.name', bounty: 3000, rationDays: 6, rationRate: 7, danger: true,
     market: ['processor', 'saltbox', 'porters', 'repair', 'antidote', 'crystal', 'healmat'], stock: {antidote: 3},
     prop: false, cond: false, capture: false, investor: false,
     hints: () => { const M = S.M; return [[M.svc.processor, 'c3.h1'], [M.svc.saltbox, 'c3.h2'], [M.svc.porters, 'c3.h3'], [S.inv.antidote >= 1, 'c3.h4'], [S.inv.crystal >= 2, 'c3.h5'], [has('heal') && S.inv.healmat >= 1, 'c3.h6']]; },
@@ -54,7 +54,7 @@ function c3Fight(X) {
   const M = S.M, L = [];
   const v = pick(participants().filter(m => m.hp < 2)) || mem('cap');
   if (S.inv.antidote > 0) { S.inv.antidote--; L.push(t('c3.f.sting', {name: nm(v)})); }
-  else { v.hp = 2; L.push(['b', t('c3.f.stingBad', {name: nm(v)})]); }
+  else { hurt(v, 2); L.push(['b', t('c3.f.stingBad', {name: nm(v)})]); }
   if (has('mage')) {
     if (S.inv.crystal >= 2) { S.inv.crystal -= 2; L.push(t('c3.f.crystal')); }
     else { S.inv.crystal = 0; L.push(['w', t('c3.f.crystalShort', {name: nm(injure(1))})]); }
@@ -62,7 +62,7 @@ function c3Fight(X) {
     else {
       const mg = mem('mage');
       if (has('heal') && S.inv.healmat > 0) { S.inv.healmat--; mg.hp = Math.max(mg.hp, 1); L.push(['w', t('c3.f.burnOk')]); }
-      else { mg.hp = 2; L.push(['b', t('c3.f.burnBad')]); }
+      else { hurt(mg, 2); L.push(['b', t('c3.f.burnBad')]); }
     }
   }
   if (!M.cond) {

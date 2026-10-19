@@ -6,7 +6,7 @@ registerContract({
 
 function c1Intel() {
   if (!S.M || S.M.id !== 'c1') newMission({
-    id: 'c1', nameKey: 'c1.name', bounty: 900, rationDays: 8, market: ['repair', 'horses', 'guide', 'antidote', 'crystal', 'healmat'], stock: {antidote: 4},
+    id: 'c1', D: 1, nameKey: 'c1.name', bounty: 900, rationDays: 8, market: ['repair', 'horses', 'guide', 'antidote', 'crystal', 'healmat'], stock: {antidote: 4},
     hints: () => {
       const M = S.M, h = [[M.svc.guide, 'c1.h.guide'], [M.svc.horses, 'c1.h.horses'], [S.inv.antidote >= 2, 'c1.h.antidote'], [M.svc.repair, 'c1.h.repair'], [has('heal') || has('appr'), 'c1.h.healer']];
       if (M.scouted) h.push([S.inv.crystal >= 1, 'c1.h.crystal']);
@@ -69,8 +69,8 @@ function c1Fight(X) {
     const name = nm(v);
     if (S.inv.antidote > 0) { S.inv.antidote--; used++; L.push(t('c1.f.antidote', {name})); }
     else if (has('heal') && S.inv.healmat > 0) { S.inv.healmat--; v.hp = Math.max(v.hp, 1); L.push(['w', t('c1.f.healmat', {name})]); }
-    else if (has('heal') || has('appr')) { v.hp = 2; L.push(['b', t('c1.f.necro', {name})]); }
-    else { v.hp = 2; L.push(['b', t('c1.f.rot', {name})]); }
+    else if (has('heal') || has('appr')) { hurt(v, 2); L.push(['b', t('c1.f.necro', {name})]); }
+    else { hurt(v, 2); L.push(['b', t('c1.f.rot', {name})]); }
   }
   if (!M.svc.repair && rnd() < 0.7) { const m = injure(1, ['tank', 'cap']); if (m) L.push(['w', t('c1.f.armor', {name: nm(m)})]); }
   L.push(['g', t('c1.f.win')]);

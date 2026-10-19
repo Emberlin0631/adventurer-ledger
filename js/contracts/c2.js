@@ -6,7 +6,7 @@ registerContract({
 
 function c2Intel() {
   if (!S.M || S.M.id !== 'c2') newMission({
-    id: 'c2', nameKey: 'c2.name', bounty: 600, rationDays: 3, market: ['repair', 'antipetri', 'mirror', 'mapper', 'crystal', 'healmat'], stock: {antipetri: 4},
+    id: 'c2', D: 2, nameKey: 'c2.name', bounty: 600, rationDays: 3, market: ['repair', 'antipetri', 'mirror', 'mapper', 'crystal', 'healmat'], stock: {antipetri: 4},
     hints: () => [[S.inv.antipetri >= 3, 'c2.h1'], [S.inv.mirror >= 2, 'c2.h2'], [S.M.svc.mapper, 'c2.h3'], [S.inv.crystal >= 2, 'c2.h4'], [has('heal') && S.inv.healmat >= 1, 'c2.h5']],
     go: c2Go, back: null, cancel: true,
   });
@@ -74,7 +74,7 @@ function c2Fight(X, mode) {
     const name = nm(v);
     if (S.inv.antipetri > 0) { S.inv.antipetri--; L.push(t('c2.f.potion', {name})); }
     else if (has('heal') && S.inv.healmat > 0) { S.inv.healmat--; v.hp = Math.max(v.hp, 1); L.push(['w', t('c2.f.healmat', {name})]); }
-    else { v.hp = 2; unresolved++; L.push(['b', t('c2.f.stone', {name})]); }
+    else { hurt(v, 2); unresolved++; L.push(['b', t('c2.f.stone', {name})]); }
   }
   if (S.inv.mirror > 0 && (mode === 'renego' || rnd() < 0.6)) { S.inv.mirror--; L.push(t('c2.f.mirrorBreak')); }
   if (mode === 'fire') { dmg = 300; S.rep -= 10; L.push(['b', t('c2.f.fine')]); }

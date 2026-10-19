@@ -1,20 +1,28 @@
 /* 遊戲狀態、成員工具、存讀檔 */
 const SAVE_KEY = 'adventurer-ledger-save';
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 const SEASON_DAYS = 30, YEAR_DAYS = 120;
 const S = {};
 
-function makeMember(key) {
+/* 難度：起始錢箱、季度開銷倍率、重傷致死基礎機率、隊長會不會死 */
+const DIFFS = {
+  easy: {chest: 600, dues: 0.8,  death: 0.04, capDies: false},
+  std:  {chest: 500, dues: 1,    death: 0.12, capDies: false},
+  hard: {chest: 420, dues: 1.25, death: 0.22, capDies: true},
+};
+const NAME_POOL = 10;
+function makeMember(key, nk) {
   const tp = MEMBER_TEMPLATES[key];
-  return {key, nk: tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false};
+  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false};
 }
-function newGame() {
+function newGame(diff = 'std') {
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, {
-    day: 1, chest: 500, rep: 50, inv: {antidote: 0, antipetri: 0, mirror: 0, crystal: 0, healmat: 0},
+    diff, fallen: [], deadPending: [], namesUsed: [],
+    day: 1, chest: DIFFS[diff].chest, rep: 50, inv: {antidote: 0, antipetri: 0, mirror: 0, crystal: 0, healmat: 0},
     bones: 0, progress: 0, flags: {}, records: [], yours: 0, yoursY: 0, M: null, pending: [], started: false,
     year: 1, seasonIdx: 0, board: [], uidSeq: 1, duesNote: 0,
-    members: STARTING_ROSTER.map(makeMember),
+    members: STARTING_ROSTER.map(k => makeMember(k)),
   });
 }
 
@@ -43,11 +51,18 @@ const participants = () => S.members.filter(m => !m.sitting);
 const nm = m => m ? t(m.nk) : t('someone');
 const missionName = M => t(M.nameKey, M.place != null ? {place: t('place.' + M.place)} : undefined);
 const roleOf = m => t('r.' + m.key);
+/* 所有受傷都經過 hurt()：重傷者記進本次任務，結算前做致死判定 */
+function hurt(m, level) {
+  if (!m) return m;
+  if (level === 2 && m.hp < 2 && S.M) (S.M.serious = S.M.serious || []).push(m);
+  m.hp = Math.max(m.hp, level);
+  return m;
+}
 function injure(level, prefer) {
   let pool = participants().filter(m => m.hp < 2);
   if (prefer) { const p = pool.filter(m => prefer.includes(m.key)); if (p.length) pool = p; }
   if (!pool.length) return null;
-  const m = pick(pool); m.hp = Math.max(m.hp, level); return m;
+  return hurt(pick(pool), level);
 }
 function spend(n, M = S.M) { S.chest -= n; if (M) M.spent += n; }
 function addLoy(m, d) { if (m) m.loy = Math.max(0, Math.min(100, m.loy + d)); }

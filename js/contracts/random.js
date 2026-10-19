@@ -27,7 +27,7 @@ function rcIntel(c) {
     const market = ['repair', 'healmat'];
     T.tags.concat(c.hidden ? [c.hidden] : []).forEach(tag => TAGS[tag].items.forEach(i => { if (!market.includes(i)) market.push(i); }));
     newMission({
-      id: 'rc', uid: c.uid, rc: c, nameKey: `rc.${c.id}.title`, place: c.place, bounty: c.bounty, rationDays: c.days,
+      id: 'rc', D: c.D, uid: c.uid, rc: c, nameKey: `rc.${c.id}.title`, place: c.place, bounty: c.bounty, rationDays: c.days,
       rationRate: 5 + Math.max(0, S.members.length - 5), market, clause: false,
       hints: () => {
         const M = S.M;

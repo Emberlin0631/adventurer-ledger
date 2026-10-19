@@ -3,7 +3,7 @@
   applyLang();
   document.getElementById('langBtn').addEventListener('click', () => setLang(LANG === 'en' ? 'zh-Hant' : 'en'));
   const r = loadGame();
-  if (r !== 'ok') newGame();
-  goHall();
+  if (r === 'ok') goHall();
+  else { newGame(); startScreen(); }
   if (r === 'old') toast(t('save.old'));
 })();

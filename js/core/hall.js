@@ -4,7 +4,8 @@ const EVENTS = {};      // 排進 S.pending 的事件，以 id 儲存才能存�
 function registerContract(def) { CONTRACTS[def.id] = def; }
 function registerEvent(id, fn) { EVENTS[id] = fn; }
 
-const seasonDues = () => 40 + 4 * S.members.length;
+const seasonDues = () => Math.round((40 + 4 * S.members.length) * DIFFS[S.diff || 'std'].dues);
+const CORE_ROLES = ['scout', 'tank', 'mage', 'heal'];
 
 let newGameArmed = false;
 function goHall() {
@@ -41,9 +42,10 @@ function goHall() {
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {
       if (S.chest < 80) return toast(t('hall.sick.toast')); S.chest -= 80; m.hp = 0; goHall();
     }, {sub: t('hall.sick.cost')})).join('')}</div></div>` : ''}
-    <div class="hallfoot"><span class="muted">${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
+    ${hirePanel()}
+    <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }
-      clearSave(); newGame(); goHall();
+      clearSave(); startScreen();
     }, {cls: 'ghost' + (newGameArmed ? ' danger' : '')})}</div>`;
   });
 }
@@ -62,6 +64,7 @@ function yearEnd(y) {
   const income = recs.reduce((a, r) => a + r.bounty, 0), shared = recs.reduce((a, r) => a + r.dist, 0);
   screen(() => `<div><h2>${t('ye.title', {y})}</h2><p class="lede">${t(verdict)}</p></div>
     <div class="row muted">${t('ye.summary', {n: recs.length, ok: recs.length - fails, b: fmt(income), d: fmt(shared)})}</div>
+    ${(S.fallen || []).some(f => f.y === y) ? `<p class="muted">${t('ye.fallen', {list: S.fallen.filter(f => f.y === y).map(f => t(f.nk)).join(t('list.sep'))})}</p>` : ''}
     <div class="tbl-wrap"><table class="rec"><thead><tr><th>${t('ye.hName')}</th><th>${t('ye.hRes')}</th><th class="n">${t('ye.hBounty')}</th><th class="n">${t('ye.hSpent')}</th><th class="n">${t('ye.hDist')}</th><th class="n">${t('ye.hChest')}</th></tr></thead>
     <tbody>${recs.map(r => `<tr><td>${recordName(r)}</td><td>${t(r.resultKey)}</td><td class="n">${fmt(r.bounty)}</td><td class="n">${fmt(r.spent)}</td><td class="n">${fmt(r.dist)}</td><td class="n">${fmt(r.chest)}</td></tr>`).join('')}</tbody></table></div>
     <div class="split"><div class="panel"><h4>${t('ye.assets')}</h4><div class="fees num">
@@ -78,5 +81,56 @@ function yearEnd(y) {
 }
 function bankrupt() {
   clearSave();
-  screen(() => `<h2>${t('bk.title')}</h2><p class="lede">${t('bk.body')}</p><p class="muted">${t('bk.stats', {y: S.year, n: S.records.length, d: fmt(S.yours)})}</p><div class="row">${B(t('bk.restart'), () => { newGame(); goHall(); }, {cls: 'pri'})}</div>`);
+  screen(() => `<h2>${t('bk.title')}</h2><p class="lede">${t('bk.body')}</p><p class="muted">${t('bk.stats', {y: S.year, n: S.records.length, d: fmt(S.yours)})}</p><div class="row">${B(t('bk.restart'), startScreen, {cls: 'pri'})}</div>`);
+}
+
+/* 開新局：選難度 */
+function startScreen() {
+  newGame();
+  screen(() => `<div><h2>${t('diff.title')}</h2><p class="lede">${t('diff.lede')}</p></div>
+    <div class="choices" style="max-width:560px">
+      ${['easy', 'std', 'hard'].map(d => B(t('diff.' + d), () => { clearSave(); newGame(d); goHall(); }, {cls: d === 'std' ? 'pri' : '', sub: t('diff.' + d + 'Sub')})).join('')}
+    </div><p class="muted">${t('diff.note')}</p>`);
+}
+
+/* 缺少核心角色時，公會介紹替補 */
+function hirePanel() {
+  const missing = CORE_ROLES.filter(r => !S.members.some(m => m.key === r || (r === 'heal' && m.key === 'appr')));
+  if (!missing.length) return '';
+  const fee = 40;
+  S.candidates = S.candidates || {};
+  missing.forEach(r => {
+    if (S.candidates[r] == null) {
+      const free = [...Array(NAME_POOL).keys()].filter(i => !S.namesUsed.includes(i));
+      S.candidates[r] = free.length ? pick(free) : Math.floor(rnd() * NAME_POOL);
+    }
+  });
+  return `<div class="panel"><h4>${t('hire.title')}</h4><p class="muted">${t('hire.body', {n: fee})}</p><div class="row">${missing.map(r => {
+    const nk = 'n.' + S.candidates[r];
+    return B(t('hire.btn', {name: t(nk), role: t('r.' + r)}), () => {
+      if (S.chest < fee) return toast(t('toast.noMoney'));
+      S.chest -= fee; const m = makeMember(r, nk); m.loy = 60; S.members.push(m);
+      S.namesUsed.push(S.candidates[r]); delete S.candidates[r]; goHall();
+    }, {sub: t('hire.sub', {s: MEMBER_TEMPLATES[r].share, n: fee})});
+  }).join('')}</div></div>`;
+}
+
+/* 後事：照契約辦，或另付撫卹金 */
+registerEvent('funeral', () => {
+  const dead = S.deadPending || []; if (!dead.length) { goHall(); return; }
+  const names = dead.map(d => t(d.nk)).join(t('list.sep'));
+  const pension = Math.round(dead.reduce((a, d) => a + 60 * d.share, 0) / 10) * 10;
+  const gear = dead.some(d => d.key === 'trainee');
+  const done = () => { S.deadPending = []; goHall(); };
+  screen(() => `<h2>${t('fn.title', {names})}</h2><p class="lede">${t('fn.body')}</p>${gear ? `<p class="muted">${t('fn.gear')}</p>` : ''}
+    <p class="quote">${t('fn.quote')}</p>
+    <div class="choices">
+      ${B(t('fn.a'), () => { S.members.forEach(m => { if (m.key !== 'cap') addLoy(m, -3); }); done(); }, {sub: t('fn.aSub')})}
+      ${B(t('fn.b', {n: fmt(pension)}), () => { if (S.chest < pension) return toast(t('toast.noMoney')); S.chest -= pension; S.rep += 3; S.members.forEach(m => { if (m.key !== 'cap') addLoy(m, 4); }); done(); }, {cls: 'pri', sub: t('fn.bSub')})}
+    </div>`);
+});
+
+function captainDied() {
+  clearSave();
+  screen(() => `<h2>${t('dth.capT')}</h2><p class="lede">${t('dth.capB')}</p><p class="muted">${t('bk.stats', {y: S.year, n: S.records.length, d: fmt(S.yours)})}</p><div class="row">${B(t('bk.restart'), startScreen, {cls: 'pri'})}</div>`);
 }
