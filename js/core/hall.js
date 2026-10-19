@@ -22,8 +22,8 @@ function goHall() {
   // 換季：扣公會會費與倉儲，公告板換新
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
   if (!S.mkt) rollMarket();
-  if (S.seasonIdx < sIdx) rollMarket();
-  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, 2)); }
+  if (S.seasonIdx < sIdx) { rollMarket(); S.cands = null; }
+  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); }
   fillBoard();
   saveGame();
   // 破產：錢箱連最便宜的一趟口糧都付不起
@@ -45,7 +45,7 @@ function goHall() {
       if (S.chest < 80) return toast(t('hall.sick.toast')); S.chest -= 80; m.hp = 0; goHall();
     }, {sub: t('hall.sick.cost')})).join('')}</div></div>` : ''}
     ${marketPanel()}
-    ${hirePanel()}
+    ${peoplePanel()}
     <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }
       clearSave(); startScreen();
@@ -94,28 +94,6 @@ function startScreen() {
     <div class="choices" style="max-width:560px">
       ${['easy', 'std', 'hard'].map(d => B(t('diff.' + d), () => { clearSave(); newGame(d); goHall(); }, {cls: d === 'std' ? 'pri' : '', sub: t('diff.' + d + 'Sub')})).join('')}
     </div><p class="muted">${t('diff.note')}</p>`);
-}
-
-/* 缺少核心角色時，公會介紹替補 */
-function hirePanel() {
-  const missing = CORE_ROLES.filter(r => !S.members.some(m => m.key === r || (r === 'heal' && m.key === 'appr')));
-  if (!missing.length) return '';
-  const fee = 40;
-  S.candidates = S.candidates || {};
-  missing.forEach(r => {
-    if (S.candidates[r] == null) {
-      const free = [...Array(NAME_POOL).keys()].filter(i => !S.namesUsed.includes(i));
-      S.candidates[r] = free.length ? pick(free) : Math.floor(rnd() * NAME_POOL);
-    }
-  });
-  return `<div class="panel"><h4>${t('hire.title')}</h4><p class="muted">${t('hire.body', {n: fee})}</p><div class="row">${missing.map(r => {
-    const nk = 'n.' + S.candidates[r];
-    return B(t('hire.btn', {name: t(nk), role: t('r.' + r)}), () => {
-      if (S.chest < fee) return toast(t('toast.noMoney'));
-      S.chest -= fee; const m = makeMember(r, nk); m.loy = 60; S.members.push(m);
-      S.namesUsed.push(S.candidates[r]); delete S.candidates[r]; goHall();
-    }, {sub: t('hire.sub', {s: MEMBER_TEMPLATES[r].share, n: fee})});
-  }).join('')}</div></div>`;
 }
 
 /* 後事：照契約辦，或另付撫卹金 */

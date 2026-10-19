@@ -156,3 +156,8 @@ img{max-width:100%}
 .trend.down,.news .down::marker{color:var(--good)}
 .news{margin:0;padding-left:18px;display:grid;gap:4px}
 .pricegrid{display:grid;grid-template-columns:1fr auto auto;gap:3px 14px;font-size:14px}
+.pill.trait{color:var(--brass);background:rgba(212,168,78,.1)}
+.mem .st{flex-wrap:wrap}
+details.fire{margin-top:4px}
+details.fire summary{cursor:pointer;color:var(--muted);font-size:13px}
+details.fire summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px}

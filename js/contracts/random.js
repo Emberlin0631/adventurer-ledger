@@ -47,6 +47,8 @@ function rcIntel(c) {
   const accept = kind => () => {
     let p = {low: 1, std: 0.85, high: justified ? 0.85 : 0.3}[kind];
     if (M.clause && !justified) p -= 0.3;
+    if (M.wantAdv && S.rep < 60) p -= 0.15;
+    if (kind !== 'low') p += (S.rep - 50) / 200;   // 聲望好，委託人比較好說話
     removeFromBoard(c);
     if (rnd() > p) {
       const keep = M.spent; S.M = null;
@@ -54,6 +56,7 @@ function rcIntel(c) {
       return;
     }
     M.bounty = bids[kind]; M.escrow = bids[kind];
+    if (M.wantAdv) { M.advance = Math.round(M.bounty * 0.2 / 10) * 10; S.chest += M.advance; }
     M.priced = kind === 'high' && justified;
     market();
   };
@@ -68,6 +71,7 @@ function rcIntel(c) {
    ${M.scouted ? '' : B(t('btn.scout'), () => { if (S.chest < scoutCost) return toast(t('toast.noMoney')); spend(scoutCost); M.scouted = true; rcIntel(c); }, {sub: t('rc.scoutSub', {n: scoutCost})})}</div>
    <div class="panel"><h4>${t('rc.bid')}</h4><div class="choices">
      ${B(`${M.clause ? '■' : '□'} ${t('rc.clause')}`, () => { M.clause = !M.clause; rcIntel(c); }, {sub: t('rc.clauseSub')})}
+     ${B(`${M.wantAdv ? '■' : '□'} ${t('rc.adv')}`, () => { M.wantAdv = !M.wantAdv; rcIntel(c); }, {sub: t(S.rep >= 60 ? 'rc.advSubOk' : 'rc.advSub')})}
      ${B(t('rc.low', {n: fmt(bids.low)}), accept('low'), {sub: t('rc.lowSub')})}
      ${B(t('rc.std', {n: fmt(bids.std)}), accept('std'), {cls: 'pri', sub: t('rc.stdSub')})}
      ${B(t('rc.high', {n: fmt(bids.high)}), accept('high'), {sub: justified ? t('rc.highSubOk') : t('rc.highSub')})}
@@ -128,7 +132,7 @@ function rcArrive(X) {
     M.bounty = Math.round(M.bounty * 1.5 / 10) * 10; M.escrow = M.bounty; renderHUD();
     card(t('rc.o.reneg'), res([['g', t('rc.reneg.res', {n: fmt(M.bounty)})]]), [{label: t('btn.fight'), cls: 'pri', fn: () => battle(X, () => rcFight(X, 0.1))}]);
   }});
-  opts.push({label: t('rc.o.push'), sub: t('rc.o.pushSub'), fn: () => battle(X, () => rcFight(X, 0))});
+  opts.push({label: t('rc.o.push'), sub: t('rc.o.pushSub'), fn: () => { riskyChoice(); battle(X, () => rcFight(X, 0)); }});
   opts.push({label: t('rc.o.quit'), sub: M.clause ? t('rc.o.quitSubC') : t('rc.o.quitSubN'), fn: () => {
     if (!M.clause) S.rep -= 10;
     rcFinish();
@@ -153,7 +157,7 @@ function rcFight(X, bonus) {
   if (rnd() < 0.08 * c.D) { const m = injure(1); if (m) L.push(['w', t('rc.f.hurt', {name: nm(m)})]); }
   const ratio = Math.max(0, (c.trueN - c.stated) / c.stated);
   const healer = has('heal') || has('appr');
-  const p = Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + bonus));
+  const p = Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + bonus));
   const usedTxt = Object.entries(used).map(([k, n]) => `${t('inv.' + k)}×${n}`).join(t('list.sep'));
   if (usedTxt) L.push(t('rc.f.used', {list: usedTxt}));
   const loot = M.extraLoot.slice(), ded = [];

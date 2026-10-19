@@ -81,5 +81,5 @@ function renderHUD() {
   const hpC = ['ok', 'l1', 'l2'];
   $('#roster').innerHTML = S.members.map(m => `<div class="mem ${m.sitting ? 'out' : ''}">${portrait(m)}
     <div class="nm">${nm(m)}</div><div class="rl">${t('roster.share', {role: roleOf(m), s: m.share})}</div>
-    <div class="st"><span class="pill ${hpC[m.hp]}">${m.sitting ? t('hp.rest') : t('hp.' + m.hp)}</span>${m.key !== 'cap' ? `<span class="loy" title="${t('roster.loy', {n: m.loy})}"><i style="width:${m.loy}%"></i></span>` : ''}</div></div>`).join('');
+    <div class="st"><span class="pill ${hpC[m.hp]}">${m.sitting ? t('hp.rest') : m.restNext ? t('hp.leave') : t('hp.' + m.hp)}</span>${traitOf(m) ? `<span class="pill trait" title="${t('tr.' + traitOf(m) + '.d')}">${t('tr.' + traitOf(m))}</span>` : ''}${m.gear ? `<span class="pill" title="${t('mem.gearD')}">${t('mem.gear')}</span>` : ''}${m.debt ? `<span class="pill l1" title="${t('mem.debtD', {n: m.debt})}">${t('mem.debt', {n: m.debt})}</span>` : ''}${m.key !== 'cap' ? `<span class="loy" title="${t('roster.loy', {n: m.loy})}"><i style="width:${m.loy}%"></i></span>` : ''}</div></div>`).join('');
 }

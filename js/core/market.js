@@ -60,6 +60,6 @@ function depart() {
   if (S.chest < ft) return toast(t('toast.noMoney'));
   spend(ft);
   M.startDay = S.day;
-  S.members.forEach(m => { if (m.hp === 1) m.hp = 0; m.sitting = m.hp === 2; });
+  S.members.forEach(m => { if (m.hp === 1) m.hp = 0; m.sitting = m.hp === 2 || !!m.restNext; });
   M.go();
 }

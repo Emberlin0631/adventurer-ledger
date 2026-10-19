@@ -13,7 +13,7 @@ const DIFFS = {
 const NAME_POOL = 10;
 function makeMember(key, nk) {
   const tp = MEMBER_TEMPLATES[key];
-  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false};
+  return {key, nk: nk || tp.nk, share: tp.share, color: tp.color, hp: 0, loy: tp.loy, earned: 0, earnedY: 0, sitting: false, trait: START_TRAITS[key] || null};
 }
 function newGame(diff = 'std') {
   for (const k of Object.keys(S)) delete S[k];
@@ -63,7 +63,7 @@ function injure(level, prefer) {
   let pool = participants().filter(m => m.hp < 2);
   if (prefer) { const p = pool.filter(m => prefer.includes(m.key)); if (p.length) pool = p; }
   if (!pool.length) return null;
-  return hurt(pick(pool), level);
+  return hurt(weightedPick(pool), level);
 }
 function spend(n, M = S.M) { S.chest -= n; if (M) M.spent += n; }
 function addLoy(m, d) { if (m) m.loy = Math.max(0, Math.min(100, m.loy + d)); }

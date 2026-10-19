@@ -40,7 +40,7 @@ function c2Cellar(X) {
   const intro = `<p>${M.clause ? t('c2.cellar.a') : t('c2.cellar.b')}${t('c2.cellar.body')}</p>`;
   const opts = [];
   if (M.clause) opts.push({label: t('c2.o.pause'), sub: t('c2.o.pauseSub'), cls: 'pri', fn: () => c2Renego(X)});
-  opts.push({label: t('c2.o.push'), sub: t('c2.o.pushSub'), fn: () => battle(X, () => c2Fight(X, 'push'))});
+  opts.push({label: t('c2.o.push'), sub: t('c2.o.pushSub'), fn: () => { riskyChoice(); battle(X, () => c2Fight(X, 'push')); }});
   opts.push({label: t('c2.o.fire'), sub: has('mage') ? t('c2.o.fireSub') : t('c2.o.fireNo'), dis: !has('mage'), fn: () => battle(X, () => c2Fight(X, 'fire'))});
   if (!M.clause) opts.push({label: t('c2.o.quit'), sub: t('c2.o.quitSub'), fn: c2Forfeit});
   card(t('c2.cellar.title'), intro, opts);
