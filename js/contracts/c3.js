@@ -10,7 +10,7 @@ function c3Intel() {
     market: ['processor', 'saltbox', 'porters', 'repair', 'antidote', 'crystal', 'healmat'], stock: {antidote: 3},
     prop: false, cond: false, capture: false, investor: false,
     hints: () => { const M = S.M; return [[M.svc.processor, 'c3.h1'], [M.svc.saltbox, 'c3.h2'], [M.svc.porters, 'c3.h3'], [S.inv.antidote >= 1, 'c3.h4'], [S.inv.crystal >= 2, 'c3.h5'], [has('heal') && S.inv.healmat >= 1, 'c3.h6']]; },
-    go: c3Go, back: c3Intel,
+    go: c3Go, back: c3Intel, cancel: true, onCancel: () => { if (S.M.investor) S.chest -= 200; },
   });
   const M = S.M;
   if (mem('tracker')) M.rationDays = 4;

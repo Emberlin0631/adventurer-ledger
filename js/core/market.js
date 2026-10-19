@@ -48,7 +48,7 @@ function market() {
           <div><span>${t('mk.after')}</span><span style="color:${S.chest - ft < 0 ? 'var(--bad)' : 'var(--brass)'}">${silver(S.chest - ft)}</span></div></div>
           ${B(t('mk.go'), depart, {cls: 'pri', dis: S.chest < ft, sub: S.chest < ft ? t('mk.goSubNo') : t('mk.goSub')})}
           ${M.back ? B(t('mk.back'), M.back) : ''}
-          ${M.cancel ? B(t('mk.cancel'), () => { S.rep -= 3; S.M = null; goHall(); }, {sub: t('mk.cancelSub')}) : ''}
+          ${M.cancel ? B(t('mk.cancel'), () => { if (M.onCancel) M.onCancel(); S.rep -= 3; S.M = null; goHall(); }, {sub: t('mk.cancelSub')}) : ''}
         </div>
       </div>
     </div>`;
