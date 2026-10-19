@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>冒險者小隊帳本</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* 版面：夜裡的公會大廳。深色木板為底，委託是釘在板上的羊皮紙，金額一律用帳本式等寬數字。 */
+:root{
+  color-scheme: dark;
+  --bg:#191b18; --panel:#23271f; --panel2:#2c3127; --line:#3c4336;
+  --fg:#e7e2d4; --muted:#a7a18f; --brass:#d4a84e; --teal:#62a89d;
+  --wax:#b9443a; --paper:#e8ddc3; --paper2:#d9cca9; --ink:#2c251c; --skin:#d9b48f;
+  --good:#7fb77e; --warn:#e0a84a; --bad:#d4574b;
+  --f-disp:"LXGW WenKai TC","Kaiti TC","STKaiti",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{margin:0;font-family:var(--f-body);font-size:15px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 40px;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 2px,transparent 2px 120px)}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:14px}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3,h4{font-family:var(--f-disp);font-weight:700;text-wrap:balance;margin:0;line-height:1.3}
+p{margin:0}
+.muted{color:var(--muted)}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.brand h1{font-size:22px;color:var(--brass);letter-spacing:.04em}
+.brand small{display:block;color:var(--muted);font-size:12px}
+.date{font-size:13px;color:var(--muted)}
+.date b{color:var(--fg);font-weight:500}
+.money{display:flex;gap:10px;align-items:center}
+.chest,.escrow{display:flex;gap:8px;align-items:center;background:var(--panel2);border-radius:8px;padding:6px 10px;min-width:0}
+.chest .lbl,.escrow .lbl{font-size:11px;color:var(--muted);letter-spacing:.08em;display:block}
+.chest .val,.escrow .val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.chest .val{color:var(--brass)}
+.coins{position:relative;width:26px;height:30px}
+.coins i{position:absolute;left:2px;width:22px;height:7px;border-radius:50%;background:var(--brass);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35)}
+.box{position:relative;width:30px;height:22px;background:#6b4f33;border-radius:3px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.3)}
+.box::after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:var(--wax);left:9px;top:5px;box-shadow:0 0 0 2px rgba(0,0,0,.2)}
+.escrow.off{opacity:.45}
+.rep{font-size:12px;color:var(--muted);text-align:right}
+.rep b{display:block;font-size:16px;color:var(--teal)}
+@media (max-width:760px){
+  .hud{grid-template-columns:1fr auto}
+  .money{grid-column:1/-1;flex-wrap:wrap}
+  .rep{grid-row:1;grid-column:2}
+  .date{grid-column:1/-1}
+}
+
+/* Roster */
+.roster-scroll{overflow-x:auto;padding-bottom:2px}
+.roster{display:flex;gap:10px;min-width:min-content}
+.mem{display:grid;grid-template-columns:44px auto;gap:2px 9px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px 8px 8px;min-width:168px}
+.mem svg{grid-row:span 3;width:44px;height:44px;border-radius:7px}
+.mem .nm{font-weight:700;font-size:14px;line-height:1.2}
+.mem .rl{font-size:12px;color:var(--muted);line-height:1.2;white-space:nowrap}
+.mem .st{display:flex;gap:6px;align-items:center;font-size:11px;line-height:1.2}
+.pill{border-radius:99px;padding:1px 7px;font-size:11px;background:var(--panel2);color:var(--muted)}
+.pill.ok{color:var(--good)} .pill.l1{color:var(--warn);background:rgba(224,168,74,.12)} .pill.l2{color:var(--bad);background:rgba(212,87,75,.14)}
+.loy{width:46px;height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.loy i{display:block;height:100%;background:var(--teal)}
+.mem.out{opacity:.5}
+
+/* Main */
+.main{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px;min-width:0}
+.main h2{font-size:24px}
+.lede{max-width:66ch;color:var(--muted)}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;padding:18px;border-radius:10px;
+  background:#3a2c1f;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 3px,transparent 3px 26px),linear-gradient(#45341f,#33261a)}
+.notice{position:relative;background:var(--paper);color:var(--ink);padding:18px 16px 14px;border-radius:2px;box-shadow:0 6px 14px rgba(0,0,0,.35);display:grid;gap:8px;transform:rotate(var(--r,0deg))}
+.notice:nth-child(2n){--r:.8deg} .notice:nth-child(3n){--r:-.7deg}
+.notice::before{content:"";position:absolute;top:-6px;left:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--wax);box-shadow:0 2px 3px rgba(0,0,0,.4)}
+.notice h3{font-size:19px;color:var(--ink)}
+.notice .meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:#5d5140}
+.notice .bounty{font-family:var(--f-disp);font-size:22px;color:#7a2f22;font-variant-numeric:tabular-nums}
+.notice p{font-size:14px}
+.notice .btn{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.notice .btn:hover{background:#4a3e2e}
+.notice.small h3{font-size:16px}
+
+.btn{font:inherit;font-size:14px;font-weight:500;cursor:pointer;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:9px 14px;text-align:left;display:inline-flex;flex-direction:column;gap:1px;transition:background .15s,border-color .15s}
+.btn small{font-size:12px;color:var(--muted);font-weight:400}
+.btn:hover{border-color:var(--brass)}
+.btn:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.btn.pri{background:var(--brass);color:#1d1a12;border-color:var(--brass)}
+.btn.pri small{color:#4a3d1e}
+.btn.pri:hover{background:#e2b95f}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.choices{display:grid;gap:8px}
+
+.split{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--panel2);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
+.panel h4{font-size:16px;color:var(--brass)}
+.intel li{margin-bottom:4px}
+.intel{margin:0;padding-left:18px}
+.intel .new{color:var(--teal)}
+
+/* Market */
+.shop{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px;background:var(--panel2);border-radius:8px;border:1px solid transparent}
+.item.on{border-color:var(--teal)}
+.item .nm{font-weight:500}
+.item .ds{font-size:12px;color:var(--muted);grid-column:1}
+.item .ctl{grid-row:1/span 2;grid-column:2;display:flex;gap:6px;align-items:center}
+.item .pr{font-variant-numeric:tabular-nums;color:var(--brass);font-size:13px;min-width:52px;text-align:right}
+.qty{min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+.sq{padding:5px 11px}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:14px}
+.checks li::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;background:var(--bad);vertical-align:1px}
+.checks li.ok::before{background:var(--good)}
+.fees{display:grid;gap:3px;font-size:14px}
+.fees div{display:flex;justify-content:space-between;gap:12px}
+.fees .tot{border-top:1px solid var(--line);padding-top:6px;margin-top:4px;font-weight:700}
+
+/* Expedition */
+.exp{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#111}
+.exp canvas{display:block;width:100%;height:210px}
+.exp-day{position:absolute;left:12px;top:10px;font-family:var(--f-disp);font-size:18px;color:#f3ecd8;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.evbox{display:grid;gap:10px}
+.card{background:var(--panel2);border-radius:10px;padding:14px 16px;display:grid;gap:10px;border-left:3px solid var(--brass)}
+.card h4{font-size:18px}
+.card .res{display:grid;gap:3px;font-size:14px}
+.card .res .b{color:var(--bad)} .card .res .g{color:var(--good)} .card .res .w{color:var(--warn)}
+
+/* Ledger */
+.ledger{background:var(--paper);color:var(--ink);border-radius:4px;padding:18px 20px;display:grid;gap:4px;font-size:15px;box-shadow:0 6px 16px rgba(0,0,0,.3);max-width:640px;width:100%}
+.ledger h3{color:var(--ink);font-size:20px;margin-bottom:6px}
+.ln{display:flex;justify-content:space-between;gap:14px;padding:3px 0;border-bottom:1px dashed rgba(44,37,28,.18);opacity:0;transform:translateY(4px);animation:inl .35s forwards}
+.ln span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ln.neg span:last-child{color:#8d2c21}
+.ln.pos span:last-child{color:#2f5b2e}
+.ln.sum{font-weight:700;border-bottom:2px solid var(--ink)}
+.ln.note{font-size:13px;color:#5d5140;border:0}
+@keyframes inl{to{opacity:1;transform:none}}
+.shares{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 14px;font-size:14px;margin-top:8px}
+.shares .h{color:#5d5140;font-size:12px}
+.slider{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:14px;flex-wrap:wrap}
+.slider input{flex:1;min-width:140px;accent-color:#7a2f22}
+.tbl-wrap{overflow-x:auto}
+table.rec{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+table.rec th,table.rec td{white-space:nowrap;padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.rec td.n,table.rec th.n{text-align:right;font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--wax);color:#fff;padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:90vw}
+.quote{font-family:var(--f-disp);font-size:17px;color:var(--brass);max-width:60ch}
+@media (prefers-reduced-motion:reduce){.ln{animation:none;opacity:1;transform:none}}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hud">
+    <div class="brand"><h1>冒險者小隊帳本</h1><small>暫定名稱・原型</small></div>
+    <div class="date" id="date"></div>
+    <div class="money">
+      <div class="chest" title="共同錢箱：隊伍真正能動用的錢"><div class="coins" id="coins"></div><div><span class="lbl">共同錢箱</span><span class="val" id="chest"></span></div></div>
+      <div class="escrow" id="escrowBox" title="公會金庫托管中的賞金：看得見，拿不到"><div class="box"></div><div><span class="lbl">公會托管中</span><span class="val" id="escrow"></span></div></div>
+    </div>
+    <div class="rep">公會聲望<b id="rep" class="num"></b></div>
+  </header>
+  <div class="roster-scroll"><div class="roster" id="roster"></div></div>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const rnd=()=>Math.random();
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const fmt=n=>Math.round(n).toLocaleString('zh-TW');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 物品與服務 ---------- */
+const ITEMS={
+  repair:{name:'修理鎖甲與武器',price:60,svc:1,desc:'沒修的話，前排在戰鬥中容易受傷'},
+  horses:{name:'兩匹馱馬＋馬廄',price:30,svc:1,desc:'少了馱馬，遠征多走 2 天'},
+  guide:{name:'當地嚮導',price:20,svc:1,desc:'熟悉被水淹沒的舊路'},
+  antidote:{name:'腐毒解毒劑',price:35,desc:'原料灰根採下 7 天就失效，貨架常缺'},
+  antipetri:{name:'抗石化藥劑',price:60,desc:'淨蛇眼睛短缺，每隊限購 4 瓶'},
+  mirror:{name:'銀背戰鏡',price:40,desc:'擋住石化目光，但戰鬥中容易破裂'},
+  crystal:{name:'魔晶粉',price:25,desc:'火術師每次強火術消耗一份'},
+  healmat:{name:'高階治療材料',price:50,desc:'治療者處理重傷、早期石化、魔力灼傷時使用'},
+  mapper:{name:'矮人測繪師',price:70,svc:1,desc:'熟悉地下建築，少挨一次埋伏'},
+  processor:{name:'怪物處理師',price:80,svc:1,desc:'固定費，另抽售出材料淨收入 10%'},
+  saltbox:{name:'銀鹽容器',price:120,svc:1,desc:'心臟必須泡在裡面才保得住魔力'},
+  porters:{name:'臨時搬運工兩名',price:60,svc:1,desc:'不參戰、不分戰利品；沒有他們，材料只能留在原地'},
+};
+const INVKEYS=['antidote','antipetri','mirror','crystal','healmat'];
+
+/* ---------- 狀態 ---------- */
+const S={};
+function newGame(){
+  Object.assign(S,{day:1,chest:500,rep:50,inv:{antidote:0,antipetri:0,mirror:0,crystal:0,healmat:0},
+    bones:0,progress:0,flags:{},records:[],yours:0,M:null,pending:[],started:false,
+    members:[
+      {key:'cap',name:'你',role:'隊長・持盾',share:1.3,color:'#d4a84e',hp:0,loy:100,earned:0},
+      {key:'scout',name:'琳恩',role:'偵查手',share:1,color:'#6fae7b',hp:0,loy:70,earned:0},
+      {key:'tank',name:'鮑爾',role:'重裝戰士',share:1,color:'#8f9bb0',hp:0,loy:70,earned:0},
+      {key:'mage',name:'艾絲',role:'火術師',share:1.25,color:'#d8693f',hp:0,loy:70,earned:0},
+      {key:'heal',name:'馬汀',role:'治療者',share:1.5,color:'#ece4cc',hp:0,loy:70,earned:0},
+    ]});
+}
+const has=k=>S.members.some(m=>m.key===k&&!m.sitting&&m.hp<2);
+const mem=k=>S.members.find(m=>m.key===k);
+const participants=()=>S.members.filter(m=>!m.sitting);
+function injure(level,prefer){
+  let pool=participants().filter(m=>m.hp<2);
+  if(prefer){const p=pool.filter(m=>prefer.includes(m.key)); if(p.length) pool=p;}
+  if(!pool.length) return null;
+  const m=pick(pool); m.hp=Math.max(m.hp,level); return m;
+}
+function season(){const d=S.day-1, s=['春','夏','秋','冬'][Math.floor(d/90)%4];return `第一年・${s}・第 <b class="num">${d%90+1}</b> 天`}
+function spend(n,M=S.M){S.chest-=n; if(M) M.spent+=n;}
+
+/* ---------- 共用 UI ---------- */
+let REG={},RN=0,EXP=null;
+function clearReg(){REG={};RN=0;}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled&&REG[b.dataset.a]){REG[b.dataset.a](e);}});
+function B(label,fn,o={}){const id='a'+(RN++);REG[id]=fn;return `<button class="btn ${o.cls||''}" data-a="${id}" ${o.dis?'disabled':''}>${label}${o.sub?`<small>${o.sub}</small>`:''}</button>`}
+function screen(html){ if(EXP){EXP.stop=true;EXP=null;} clearReg(); $('#main').innerHTML=typeof html==='function'?html():html; renderHUD(); window.scrollTo({top:0,behavior:RM?'auto':'smooth'}); }
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
+function card(title,html,choices=[]){
+  const ch=choices.map(c=>B(c.label,c.fn,{sub:c.sub,dis:c.dis,cls:c.cls})).join('');
+  $('#evbox').innerHTML=`<div class="card"><h4>${title}</h4>${html}${ch?`<div class="choices">${ch}</div>`:''}</div>`;
+  renderHUD();
+}
+const res=lines=>`<div class="res">${lines.map(l=>typeof l==='string'?`<div>${l}</div>`:`<div class="${l[0]}">${l[1]}</div>`).join('')}</div>`;
+
+function portrait(m){
+  const c=m.color; let em='';
+  switch(m.key){
+    case 'cap': em='<path d="M29 25h8v6q0 5-4 7q-4-2-4-7z" fill="#8a6a2c" stroke="#e8cf8a" stroke-width="1"/>';break;
+    case 'scout': em='<path d="M31 22q7 8 0 16" fill="none" stroke="#c8a36b" stroke-width="1.6"/><line x1="31" y1="22" x2="31" y2="38" stroke="#eee" stroke-width=".6"/>';break;
+    case 'tank': em='<path d="M12 15q8-9 16 0v3H12z" fill="#7d8798"/>';break;
+    case 'mage': em='<path d="M33 38q-5-4-1-10q1 3 3 3q0-4 2-6q3 6-1 13z" fill="#f08a3c"/>';break;
+    case 'heal': case 'appr': em='<path d="M30 37q0-9 7-11q0 9-7 11z" fill="#7fb77e"/><line x1="30" y1="37" x2="35" y2="29" stroke="#3d6b3c" stroke-width=".8"/>';break;
+    case 'trainee': em='<line x1="31" y1="38" x2="37" y2="24" stroke="#cfd6df" stroke-width="2"/><line x1="31" y1="33" x2="36" y2="35" stroke="#8a6a2c" stroke-width="2"/>';break;
+    case 'tracker': em='<circle cx="33" cy="33" r="2.4" fill="#b98d5a"/><circle cx="30" cy="28.5" r="1.3" fill="#b98d5a"/><circle cx="33" cy="27.5" r="1.3" fill="#b98d5a"/><circle cx="36" cy="28.5" r="1.3" fill="#b98d5a"/>';break;
+  }
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#30362b"/><path d="M6 40q14-20 28 0z" fill="${c}"/><circle cx="20" cy="17" r="7" fill="#d9b48f"/>${em}</svg>`;
+}
+
+function renderHUD(){
+  $('#date').innerHTML=season();
+  $('#chest').textContent=fmt(S.chest)+' 銀';
+  const n=Math.max(0,Math.min(6,Math.ceil(S.chest/120)));
+  $('#coins').innerHTML=Array.from({length:n},(_,i)=>`<i style="bottom:${i*4}px"></i>`).join('');
+  const esc=S.M&&S.M.escrow?S.M.escrow:0;
+  $('#escrow').textContent=fmt(esc)+' 銀';
+  $('#escrowBox').classList.toggle('off',!esc);
+  $('#rep').textContent=S.rep;
+  const hpT=['健康','輕傷','重傷'],hpC=['ok','l1','l2'];
+  $('#roster').innerHTML=S.members.map(m=>`<div class="mem ${m.sitting?'out':''}">${portrait(m)}
+    <div class="nm">${m.name}</div><div class="rl">${m.role}・份額 ${m.share}</div>
+    <div class="st"><span class="pill ${hpC[m.hp]}">${m.sitting?'休養中':hpT[m.hp]}</span>${m.key!=='cap'?`<span class="loy" title="忠誠 ${m.loy}"><i style="width:${m.loy}%"></i></span>`:''}</div></div>`).join('');
+}
+
+/* ---------- 公會大廳 ---------- */
+function goHall(){
+  // 離隊檢查
+  const leaver=S.members.find(m=>m.key!=='cap'&&m.loy<25);
+  if(leaver){S.members=S.members.filter(m=>m!==leaver);
+    screen(`<h2>${leaver.name}離隊了</h2><p class="lede">分到的錢一直配不上承擔的風險。${leaver.name}把共同裝備還回倉庫，帶走了自己的私人物品。</p><div class="row">${B('回到大廳',goHall,{cls:'pri'})}</div>`);return;}
+  if(S.pending.length){S.pending.shift()();return;}
+  if(S.progress>=3){yearEnd();return;}
+  if(S.chest<10){bankrupt();return;}
+  const sick=S.members.filter(m=>m.hp===2);
+  screen(()=>{const notices=[];
+  if(S.progress===0) notices.push(N_c1());
+  if(S.progress===1) notices.push(N_c2());
+  if(S.progress===2) notices.push(N_c3());
+  if(S.progress>=1) notices.push(N_job('grave'),N_job('escort'));
+  return `
+    ${!S.started?`<div class="panel"><h4>你接手了一支冒險者小隊</h4><p>五名技能不同、裝備不同、死亡成本也不同的自由職業者，加上一只裝著 5 枚金幣（500 銀幣）的共同錢箱。委託人的賞金會先封進公會金庫，任務完成、驗收通過才會結算。你能動用的，只有錢箱裡的錢。</p></div>`:''}
+    <div class="row" style="justify-content:space-between"><h2>公會公告板</h2><span class="muted">庫存：${invText()||'無'}</span></div>
+    <div class="board">${notices.join('')}</div>
+    ${sick.length?`<div class="panel"><h4>重傷成員</h4><p class="muted">重傷者下一趟會留在城裡休養，錢箱每趟付 20 銀維持金。也可以送神殿立刻治好。</p><div class="row">${sick.map(m=>B(`送${m.name}去神殿`,()=>{if(S.chest<80)return toast('錢箱不夠 80 銀');S.chest-=80;m.hp=0;goHall();},{sub:'80 銀'})).join('')}</div></div>`:''}
+  `;});
+  S.started=true;
+}
+function invText(){const n={antidote:'解毒劑',antipetri:'抗石化藥',mirror:'銀背鏡',crystal:'魔晶粉',healmat:'治療材料'};return INVKEYS.filter(k=>S.inv[k]).map(k=>`${n[k]}×${S.inv[k]}`).join('、')+(S.bones?`${INVKEYS.some(k=>S.inv[k])?'、':''}蠍獅骨材（估值 ${S.bones}）`:'');}
+
+function notice(o){return `<article class="notice ${o.small?'small':''}"><h3>${o.title}</h3><div class="meta">${o.meta.map(x=>`<span>${x}</span>`).join('')}</div><div class="bounty">${o.bounty}</div><p>${o.body}</p><div class="row">${o.btn}</div></article>`}
+
+/* ---------- 任務共用：採購與出發 ---------- */
+function newMission(o){S.M=Object.assign({spent:0,svc:{},bought:{},stock:{},advance:0,escrow:0,danger:false,rationRate:5},o);}
+function departFees(){
+  const M=S.M, f=[['口糧與補給',M.rationDays*M.rationRate,`${M.rationDays} 天`]];
+  S.members.filter(m=>m.hp===2).forEach(m=>f.push([`${m.name}傷病維持金`,20,'留城休養']));
+  if(M.danger){
+    if(S.flags.healFee&&mem('heal')&&mem('heal').hp<2) f.push(['治療者固定專業費',S.flags.healFee,'危險任務']);
+    if(S.flags.mageFee&&mem('mage')&&mem('mage').hp<2) f.push(['火術師固定專業費',S.flags.mageFee,'危險任務']);
+    if(mem('tracker')&&mem('tracker').hp<2) f.push(['追蹤者出發前固定費',60,'']);
+  }
+  if(M.capture) f.push(['鎮靜藥劑與強化鐵籠',300,'活捉選項']);
+  return f;
+}
+function market(){
+  const M=S.M;
+  const row=k=>{const it=ITEMS[k];
+    if(it.svc){const on=!!M.svc[k];
+      return `<div class="item ${on?'on':''}"><span class="nm">${it.name}</span><span class="ds">${it.desc}</span><div class="ctl"><span class="pr">${it.price} 銀</span>${B(on?'退掉':'雇用',()=>{if(on){S.chest+=it.price;M.spent-=it.price;M.svc[k]=false;}else{if(S.chest<it.price)return toast('錢箱不夠');spend(it.price);M.svc[k]=true;}market();},{cls:'sq'})}</div></div>`;}
+    const b=M.bought[k]||0, lim=M.stock[k]??99, left=lim-b;
+    return `<div class="item ${S.inv[k]?'on':''}"><span class="nm">${it.name}${M.stock[k]!=null?` <span class="muted" style="font-size:12px">（店裡剩 ${left}）</span>`:''}</span><span class="ds">${it.desc}</span><div class="ctl"><span class="pr">${it.price} 銀</span>${B('−',()=>{S.chest+=it.price;M.spent-=it.price;S.inv[k]--;M.bought[k]--;market();},{cls:'sq',dis:!b})}<span class="qty">${S.inv[k]}</span>${B('＋',()=>{if(S.chest<it.price)return toast('錢箱不夠');spend(it.price);S.inv[k]++;M.bought[k]=b+1;market();},{cls:'sq',dis:left<=0})}</div></div>`;};
+  const fees=departFees(), ft=fees.reduce((a,f)=>a+f[1],0);
+  const hints=M.hints();
+  screen(()=>`
+    <div><h2>出發前採購</h2><p class="lede">${M.name}。任務還沒開始，錢就已經在往外流。買多了的藥劑會留在庫存，但在賣掉以前，它不是錢。</p></div>
+    <div class="split">
+      <div class="shop">${M.market.map(row).join('')}</div>
+      <div style="display:grid;gap:14px">
+        <div class="panel"><h4>準備檢查</h4><ul class="checks">${hints.map(h=>`<li class="${h[0]?'ok':''}">${h[1]}</li>`).join('')}</ul></div>
+        <div class="panel"><h4>出發時支付</h4><div class="fees num">${fees.map(f=>`<div><span>${f[0]} <span class="muted">${f[2]||''}</span></span><span>${f[1]} 銀</span></div>`).join('')}
+          <div class="tot"><span>本次任務已花</span><span>${fmt(M.spent)} 銀</span></div>
+          <div><span>出發後錢箱剩</span><span style="color:${S.chest-ft<0?'var(--bad)':'var(--brass)'}">${fmt(S.chest-ft)} 銀</span></div></div>
+          ${B('出發',depart,{cls:'pri',dis:S.chest<ft,sub:S.chest<ft?'錢箱付不起口糧與固定開銷':'口糧與固定開銷在出發時扣款'})}
+          ${M.back?B('回到委託',M.back):''}
+        </div>
+      </div>
+    </div>`);
+}
+function depart(){
+  const M=S.M, fees=departFees(), ft=fees.reduce((a,f)=>a+f[1],0);
+  if(S.chest<ft) return toast('錢箱不夠');
+  spend(ft);
+  S.members.forEach(m=>{if(m.hp===1)m.hp=0; m.sitting=m.hp===2;});
+  M.go();
+}
+
+/* ---------- 遠征畫面 ---------- */
+const BIOME={
+  swamp:{sky:['#3b4a4a','#6d7a66'],hill:'#2f3a2e',ground:'#3e4a2c',ground2:'#2c3620'},
+  cellar:{sky:['#1b1714','#2c2420'],hill:'#3a302a',ground:'#463a30',ground2:'#2f2620'},
+  road:{sky:['#4b5f78','#c59a6a'],hill:'#4a4f3a',ground:'#7a6a48',ground2:'#5b4e34'},
+  grave:{sky:['#20263a','#4e4d62'],hill:'#2a2d36',ground:'#3a3d35',ground2:'#2a2c26'},
+};
+function expedition(o){
+  screen(`<div class="exp"><canvas id="cv"></canvas><div class="exp-day" id="expday">出發</div></div><div id="evbox" class="evbox"><div class="card"><h4>${S.M.name}</h4><p class="muted">隊伍離開城門。</p></div></div>`);
+  const cv=$('#cv'),g=cv.getContext('2d');
+  const X={days:o.days,day:0,paused:false,walking:true,off:0,monster:0,flash:0,stop:false,extras:o.extras||0,o};
+  EXP=X;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  function size(){const w=cv.clientWidth;cv.width=w*dpr;cv.height=210*dpr;}
+  size(); window.addEventListener('resize',size);
+  const DAYMS=RM?350:750; let acc=0,last=performance.now();
+  X.resume=()=>{X.paused=false;};
+  function tick(now){
+    if(X.stop){window.removeEventListener('resize',size);return;}
+    const dt=Math.min(60,now-last); last=now;
+    if(X.walking&&!X.paused){
+      X.off+=dt*0.06; acc+=dt;
+      if(acc>DAYMS){acc=0;X.day++;S.day++;renderHUD();$('#expday').textContent=`第 ${X.day} 天`;
+        const ev=o.events&&o.events[X.day];
+        if(ev){X.paused=true;ev(X);}
+        else if(X.day>=X.days){X.walking=false;X.arriveT=now;}
+      }
+    }
+    if(!X.walking&&X.monster<1&&o.monster){X.monster=Math.min(1,X.monster+dt/700); if(X.monster>=1&&!X.arrived){X.arrived=true;o.onArrive(X);}}
+    else if(!X.walking&&!o.monster&&!X.arrived){X.arrived=true;o.onArrive(X);}
+    draw(g,cv,X,o,now,dpr);
+    requestAnimationFrame(tick);
+  }
+  // 事件結束後若天數已到，繼續抵達
+  const r0=X.resume; X.resume=()=>{r0(); if(X.day>=X.days){X.walking=false;}};
+  requestAnimationFrame(tick);
+  return X;
+}
+function battle(X,then){X.flash=performance.now();setTimeout(then,RM?200:1300);}
+function draw(g,cv,X,o,now,dpr){
+  const W=cv.width/dpr,H=210,b=BIOME[o.biome];
+  g.setTransform(dpr,0,0,dpr,0,0);
+  let shake=0; const fl=now-X.flash; if(X.flash&&fl<1200&&!RM) shake=Math.sin(fl/30)*3*(1-fl/1200);
+  g.save(); g.translate(shake,0);
+  const sky=g.createLinearGradient(0,0,0,H); sky.addColorStop(0,b.sky[0]); sky.addColorStop(1,b.sky[1]); g.fillStyle=sky; g.fillRect(-5,0,W+10,H);
+  // 遠景
+  g.fillStyle=b.hill; g.beginPath(); g.moveTo(-5,H);
+  for(let x=-5;x<=W+5;x+=8){const y=110+Math.sin((x+X.off*0.25)/70)*14+Math.sin((x+X.off*0.25)/23)*5; g.lineTo(x,y);} g.lineTo(W+5,H); g.fill();
+  if(o.biome==='cellar'){ // 拱門石牆
+    g.fillStyle='#2a221d'; for(let i=-1;i<W/120+2;i++){const x=i*120-(X.off*0.5%120); g.fillRect(x,40,18,110); g.beginPath(); g.arc(x+69,90,51,Math.PI,0); g.lineWidth=10; g.strokeStyle='#2a221d'; g.stroke();}
+    g.fillStyle='#5a3f26'; for(let i=-1;i<W/90+2;i++){const x=i*90-(X.off%90)+30; g.beginPath(); g.ellipse(x,146,14,18,0,0,7); g.fill(); g.strokeStyle='#2b1d12'; g.lineWidth=2; g.beginPath(); g.moveTo(x-14,140);g.lineTo(x+14,140);g.stroke();}
+  }
+  if(o.biome==='road'&&X.days-X.day<=1){ g.fillStyle='#3a3530'; const tx=W*0.82; g.fillRect(tx,48,34,110); g.fillRect(tx-6,40,46,12); for(let i=0;i<4;i++) g.fillRect(tx-6+i*13,32,8,10);}
+  if(o.biome==='grave'){ g.fillStyle='#5b5e66'; for(let i=-1;i<W/70+2;i++){const x=i*70-(X.off*0.8%70)+10; g.beginPath(); g.moveTo(x,160); g.lineTo(x,138); g.arc(x+9,138,9,Math.PI,0); g.lineTo(x+18,160); g.fill();}}
+  // 地面
+  g.fillStyle=b.ground; g.fillRect(-5,158,W+10,H-158);
+  g.fillStyle=b.ground2; for(let i=-1;i<W/40+2;i++){const x=i*40-(X.off%40); g.fillRect(x,170+(i%3)*9,18,3);}
+  if(o.biome==='swamp'){ g.strokeStyle='#5d6b3a'; g.lineWidth=1.5; for(let i=-1;i<W/26+2;i++){const x=i*26-(X.off*1.2%26); g.beginPath(); g.moveTo(x,162); g.quadraticCurveTo(x+3,140,x+(i%2?6:-2),128+(i%4)*4); g.stroke();}
+    g.fillStyle='rgba(120,150,150,.25)'; for(let i=-1;i<W/150+2;i++){const x=i*150-(X.off%150); g.beginPath(); g.ellipse(x+60,185,40,5,0,0,7); g.fill();}}
+  // 隊伍
+  const ps=participants(); const base=W*0.34, walk=X.walking&&!X.paused;
+  const all=ps.map(m=>({c:m.color,hurt:m.hp})).concat(Array.from({length:X.extras},()=>({c:'#77736a',hurt:0,extra:1})));
+  all.forEach((m,i)=>{const x=base-i*17, bob=walk&&!RM?Math.abs(Math.sin(now/140+i))*3:0, y=160-bob;
+    g.fillStyle='rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(x,162,7,2,0,0,7); g.fill();
+    g.fillStyle=m.c; g.fillRect(x-5,y-20,10,15);
+    const leg=walk&&!RM?Math.sin(now/140+i)*3:0; g.fillRect(x-4+leg,y-6,3,6); g.fillRect(x+1-leg,y-6,3,6);
+    g.fillStyle='#d9b48f'; g.beginPath(); g.arc(x,y-25,5,0,7); g.fill();
+    if(m.extra){g.fillStyle='#8a6a3c'; g.fillRect(x-9,y-22,5,10);}
+    if(m.hurt){g.fillStyle=m.hurt===2?'#d4574b':'#e0a84a'; g.fillRect(x-2,y-36,4,4);} });
+  // 怪物
+  if(o.monster&&X.monster>0){const mx=W*0.68+(1-X.monster)*W*0.4, my=160; drawMonster(g,o.monster,mx,my,now);}
+  if(X.flash&&fl<1200&&!RM){g.fillStyle=`rgba(255,220,160,${0.35*(1-fl/1200)*(Math.sin(fl/60)>0?1:.3)})`; g.fillRect(-5,0,W+10,H);}
+  g.restore();
+}
+function drawMonster(g,t,x,y,now){
+  const br=Math.sin(now/300)*1.5;
+  if(t==='ghoul'){for(let i=0;i<3;i++){const ox=x+i*26,oy=y; g.fillStyle='#6d756a'; g.beginPath(); g.ellipse(ox,oy-16+br,10,14,-.4,0,7); g.fill(); g.beginPath(); g.arc(ox-8,oy-30+br,6,0,7); g.fill(); g.fillStyle='#e4e06a'; g.fillRect(ox-11,oy-32+br,2,2); g.strokeStyle='#6d756a'; g.lineWidth=3; g.beginPath(); g.moveTo(ox-6,oy-12); g.lineTo(ox-14,oy); g.moveTo(ox+4,oy-6); g.lineTo(ox+6,oy); g.stroke();}}
+  else if(t==='lizard'){for(let i=0;i<3;i++){const ox=x+i*34, s=i===2?.7:1; g.fillStyle=i===1?'#8c9a86':'#6a7a63'; g.beginPath(); g.ellipse(ox,y-7*s,20*s,7*s,0,0,7); g.fill(); g.beginPath(); g.moveTo(ox+18*s,y-7*s); g.lineTo(ox+38*s,y-3*s); g.lineTo(ox+18*s,y-3*s); g.fill(); g.beginPath(); g.ellipse(ox-20*s,y-10*s,8*s,5*s,0,0,7); g.fill(); g.fillStyle=`rgba(190,255,200,${.6+.4*Math.sin(now/200+i)})`; g.fillRect(ox-25*s,y-12*s,3,2);}}
+  else if(t==='manticore'){g.fillStyle='#8a5a3a'; g.beginPath(); g.ellipse(x+30,y-26+br,34,18,0,0,7); g.fill(); g.beginPath(); g.arc(x,y-38+br,14,0,7); g.fill(); g.fillStyle='#5e3a24'; g.beginPath(); g.arc(x,y-38+br,18,Math.PI*.6,Math.PI*1.9); g.lineWidth=6; g.strokeStyle='#5e3a24'; g.stroke(); g.fillStyle='#8a5a3a'; for(const lx of [10,22,44,56]) g.fillRect(x+lx-3,y-14,6,14);
+    g.strokeStyle='#6a4630'; g.lineWidth=6; g.beginPath(); g.moveTo(x+60,y-30); g.quadraticCurveTo(x+90,y-40,x+80,y-70+br); g.stroke(); g.fillStyle='#c9c06a'; g.beginPath(); g.moveTo(x+80,y-78+br); g.lineTo(x+74,y-66); g.lineTo(x+86,y-66); g.fill();
+    g.fillStyle='rgba(120,90,70,.75)'; g.beginPath(); g.moveTo(x+20,y-40); g.lineTo(x+50,y-80+br*2); g.lineTo(x+62,y-38); g.fill(); g.fillStyle='#f0d070'; g.fillRect(x-7,y-41+br,3,2);}
+  else if(t==='goose'){for(let i=0;i<4;i++){const ox=x+i*24, oy=y-30-Math.sin(now/250+i)*6; g.fillStyle='rgba(200,210,235,.6)'; g.beginPath(); g.ellipse(ox,oy,9,6,0,0,7); g.fill(); g.beginPath(); g.moveTo(ox-6,oy-2); g.quadraticCurveTo(ox-12,oy-14,ox-16,oy-12); g.lineWidth=3; g.strokeStyle='rgba(200,210,235,.6)'; g.stroke();}}
+}
+
+/* ---------- 結算 ---------- */
+function settle(o){
+  const M=S.M; screen('');
+  const fee=Math.round((o.bounty||0)*0.05);
+  const adv=M.advance||0;
+  const loot=(o.loot||[]).reduce((a,l)=>a+l[1],0), ded=(o.ded||[]).reduce((a,l)=>a+l[1],0);
+  const pool=(o.bounty||0)-adv-fee+loot-ded;
+  const owed=Math.max(0,M.spent-adv);
+  const reimb=Math.max(0,Math.min(owed,pool));
+  const rest=pool-reimb;
+  const ps=participants().filter(m=>true);
+  const tot=ps.reduce((a,m)=>a+m.share,0);
+  let rate=rest>0?0.15:0;
+  function lines(){
+    const L=[];
+    if(o.bounty) L.push(['pos','托管賞金驗收通過','+'+fmt(o.bounty)]); else L.push(['','沒有賞金可結算','0']);
+    if(adv) L.push(['neg','已從托管預支（任務前領走）','−'+fmt(adv)]);
+    if(fee) L.push(['neg','公會服務費 5%','−'+fmt(fee)]);
+    (o.loot||[]).forEach(l=>L.push(['pos',l[0],'+'+fmt(l[1])]));
+    (o.ded||[]).forEach(l=>L.push(['neg',l[0],'−'+fmt(l[1])]));
+    L.push(['sum','可結算金額',fmt(pool)]);
+    L.push(['neg',`返還任務支出 → 共同錢箱${reimb<owed?`（只收回 ${fmt(reimb)} / ${fmt(owed)}）`:''}`,'−'+fmt(reimb)]);
+    return L;
+  }
+  function render(){
+    const reserve=Math.max(0,Math.round(rest*rate)), dist=Math.max(0,rest-reserve);
+    const L=lines(); let d=0;
+    const lh=L.map(l=>`<div class="ln ${l[0]}" style="animation-delay:${(d++)*0.12}s"><span>${l[1]}</span><span>${l[2]}</span></div>`).join('');
+    const loss=owed-reimb;
+    const tail=rest>0?`
+      <div class="ln neg" style="animation-delay:${d*0.12}s"><span>提撥共同儲備 → 共同錢箱</span><span>−${fmt(reserve)}</span></div>
+      <div class="ln sum" style="animation-delay:${(d+1)*0.12}s"><span>可分配盈餘</span><span>${fmt(dist)}</span></div>
+      <div class="slider"><label for="rate">儲備比例 <b class="num" id="rateV">${Math.round(rate*100)}%</b></label><input id="rate" type="range" min="0" max="40" step="5" value="${Math.round(rate*100)}"></div>
+      <div class="shares num"><span class="h">成員</span><span class="h">角色</span><span class="h">份額</span><span class="h">分得</span>
+        ${ps.map(m=>`<span>${m.name}</span><span>${m.role}</span><span>${m.share}</span><span>${fmt(dist*m.share/tot)}</span>`).join('')}</div>`
+      :`<div class="ln note" style="animation-delay:${d*0.12}s"><span>${loss>0?`這趟虧了 ${fmt(loss)} 銀，錢箱吞下損失，沒有盈餘可分。`:'打平。沒有盈餘可分。'}</span><span></span></div>`;
+    $('#main').innerHTML=`<div><h2>${o.title}</h2>${o.intro?`<p class="lede">${o.intro}</p>`:''}</div>
+      <div class="ledger"><h3>結算帳</h3>${lh}${tail}${o.note?`<div class="ln note" style="animation-delay:${(d+2)*0.12}s"><span>${o.note}</span><span></span></div>`:''}</div>
+      <div class="row" id="sbtn"></div>`;
+    clearReg();
+    $('#sbtn').innerHTML=B(rest>0?'確認分帳':'收起帳本',()=>apply(reserve,dist),{cls:'pri'});
+    const r=$('#rate'); if(r){ r.addEventListener('input',()=>{rate=r.value/100; render(); $('#main').querySelectorAll('.ln').forEach(e=>{e.style.animation='none';e.style.opacity=1;e.style.transform='none'}); $('#rate').focus();}); }
+  }
+  function apply(reserve,dist){
+    S.chest+=reimb+reserve;
+    const per=tot?dist/tot:0;
+    ps.forEach(m=>{const amt=dist*m.share/tot||0; m.earned+=amt; if(m.key==='cap') S.yours+=amt;
+      if(m.key!=='cap'){ m.loy+= per>=60?5: per>=30?2:-6; if(m.hp===2) m.loy-=4; m.loy=Math.max(0,Math.min(100,m.loy)); }});
+    S.members.forEach(m=>{if(m.sitting){m.sitting=false;m.hp=1;}});
+    S.records.push({name:M.name,result:o.result||'成功',bounty:o.bounty||0,spent:M.spent,dist,chest:S.chest});
+    S.M=null;
+    (o.after||goHall)();
+  }
+  render();
+}
+
+/* ========== 委託一：磨坊食屍鬼 ========== */
+function N_c1(){return notice({title:'河谷磨坊：運糧小路上的沼澤食屍鬼',meta:['委託人：河谷磨坊主','路程：約 8 天'],bounty:'900 銀・托管中',body:'三隻沼澤食屍鬼堵住運糧小路，咬死了兩頭驢。磨坊收不到糧，附近村莊的麵粉開始漲價。',btn:B('查看委託',c1Intel)});}
+function c1Intel(){
+  if(!S.M||S.M.id!=='c1') newMission({id:'c1',name:'河谷磨坊的沼澤食屍鬼',bounty:900,rationDays:8,market:['repair','horses','guide','antidote','crystal','healmat'],stock:{antidote:4},
+    hints:()=>{const M=S.M,h=[[M.svc.guide,'嚮導：舊路被水淹沒'],[M.svc.horses,'馱馬：否則多走 2 天，口糧也要多帶'],[S.inv.antidote>=2,'解毒劑至少 2 瓶：食屍鬼的腐毒'],[M.svc.repair,'修理鎖甲與武器'],[has('heal')||has('appr'),'治療者隨隊']]; if(M.scouted) h.push([S.inv.crystal>=1,'魔晶粉 1 份：燒掉巢穴外的孢子層']); return h;},
+    go:c1Go,back:c1Intel});
+  const M=S.M;
+  screen(()=>`<div><h2>${M.name}</h2><p class="lede">磨坊主擔心你拿了預付款就消失，你也擔心怪物死後還得去討薪。所以 900 銀幣封在公會金庫，壓著三道蠟封。你看得見，卻不能拿一枚去買口糧。</p></div>
+   <div class="split"><div class="panel"><h4>已知情報</h4><ul class="intel">
+     <li>目標：沼澤食屍鬼 3 隻，巢穴在月濕濕地邊緣</li><li>咬傷帶腐毒，要用炼金解毒劑壓制</li><li>舊路被水淹沒，外地人容易迷路</li>
+     <li>最近城防軍也在收購解毒劑，店裡只剩 4 瓶</li>
+     ${M.scouted?'<li class="new">鑑定師：巢穴外長了一層孢子，不燒掉的話會多一次感染</li>':''}</ul></div>
+   <div class="panel"><h4>契約</h4><p>完成條件：道路恢復通行、磨坊復工。公會驗收後結算，服務費 5%。</p>
+     <div class="choices">${M.scouted?'':B('雇怪物鑑定師看一眼',()=>{if(S.chest<15)return toast('錢箱不夠');spend(15);M.scouted=true;c1Intel();},{sub:'15 銀・計入任務支出'})}
+     ${B('接下委託，去採購',()=>{M.escrow=900;market();},{cls:'pri',sub:'賞金封進公會金庫'})}${B('回到公告板',goHall)}</div></div></div>`);
+}
+function c1Go(){
+  const M=S.M; let days=M.svc.horses?8:10;
+  expedition({biome:'swamp',monster:'ghoul',days,events:{
+    2:X=>{ if(M.svc.guide){card('被水淹沒的舊路','<p>嚮導帶著你們繞開舊路，從蘆葦地裡穿過去。</p>',[{label:'繼續前進',fn:X.resume}]);return;}
+      card('被水淹沒的舊路','<p>原本的路整段泡在水裡。沒有嚮導，沒人知道哪裡能踩。</p>',[
+        {label:'涉水強行通過',sub:'可能有人受傷',fn:()=>{const m=rnd()<0.6?injure(1,['scout','tank','cap']):null;card('涉水',res([m?['w',`${m.name}踩進暗坑，扭傷了。`]:['g','運氣不錯，全員通過。']]),[{label:'繼續前進',fn:X.resume}]);}},
+        {label:'繞遠路',sub:'多走 2 天，加買 10 銀口糧',fn:()=>{spend(10);X.days+=2;card('繞遠路',res(['多花兩天，口糧從錢箱多扣 10 銀。']),[{label:'繼續前進',fn:X.resume}]);}}]);},
+    5:X=>card('營火邊的帳本','<p>鮑爾提議把昨晚在驛站的一頓好酒記進任務帳。「反正最後會報銷。」照規矩，能報銷的支出要在出發前經兩名成員確認。</p>',[
+        {label:'照規矩拒絕',sub:'鮑爾不太高興',fn:()=>{mem('tank')&&(mem('tank').loy-=5);card('照規矩',res(['鮑爾嘟囔了幾句，自己付了酒錢。']),[{label:'繼續前進',fn:X.resume}]);}},
+        {label:'從你自己的分紅裡出',sub:'你個人 −10 銀',fn:()=>{S.yours-=10;S.members.forEach(m=>{if(m.key!=='cap')m.loy=Math.min(100,m.loy+3)});card('你請客',res(['大家很開心。這筆錢沒進任務帳。']),[{label:'繼續前進',fn:X.resume}]);}},
+        {label:'記進任務帳',sub:'任務支出 +10，其他人有意見',fn:()=>{M.spent+=10;S.chest-=10;S.members.forEach(m=>{if(!['cap','tank'].includes(m.key))m.loy-=3});card('記帳',res([['w','琳恩和馬汀交換了一下眼神。五個人對「必要開支」有五種理解。']]),[{label:'繼續前進',fn:X.resume}]);}}]),
+  },onArrive:X=>card('巢穴就在前面','<p>三隻食屍鬼縮在被淹沒的穀倉旁。</p>',[{label:'開戰',cls:'pri',fn:()=>battle(X,()=>c1Fight(X))}])});
+}
+function c1Fight(X){
+  const M=S.M, L=[]; let inf=2;
+  if(M.scouted&&has('mage')&&S.inv.crystal>0){S.inv.crystal--;inf=1;L.push(['g','艾絲用一份魔晶粉燒掉巢穴外的孢子層。']);}
+  else if(has('mage')&&S.inv.crystal>0){S.inv.crystal--;L.push('艾絲用一份魔晶粉封住食屍鬼的退路。');}
+  let used=0;
+  for(let i=0;i<inf;i++){const v=pick(participants().filter(m=>m.hp<2)); if(!v)break;
+    if(S.inv.antidote>0){S.inv.antidote--;used++;L.push(`${v.name}被咬，喝下解毒劑壓住腐毒。`);}
+    else if(has('heal')&&S.inv.healmat>0){S.inv.healmat--;v.hp=Math.max(v.hp,1);L.push(['w',`沒有解毒劑了。治療者用高階材料處理${v.name}的腐毒，留下輕傷。`]);}
+    else if(has('heal')||has('appr')){v.hp=2;L.push(['b',`沒有解毒劑也沒有材料，${v.name}的傷口開始壞死，重傷。`]);}
+    else{v.hp=2;L.push(['b',`${v.name}的咬傷腐爛，重傷。`]);}}
+  if(!M.svc.repair&&rnd()<0.7){const m=injure(1,['tank','cap']);m&&L.push(['w',`沒修的鎖甲裂開，${m.name}受了輕傷。`]);}
+  L.push(['g','三隻食屍鬼全數消滅。']);
+  if(S.inv.antidote>0) L.push(`解毒劑用了 ${used} 瓶，剩下 ${S.inv.antidote} 瓶帶回庫存。`);
+  card('戰鬥結束',res(L)+'<p class="muted">琳恩割下三副下顎骨做為證據。接下來是驗收：磨坊管事確認道路恢復，公會鑑定師檢查骨骼上的屍斑和魔力殘留。兩天後，蠟封才會打開。</p>',[{label:'回城驗收',cls:'pri',fn:()=>{S.day+=2;S.progress=1;settle({title:'磨坊委託結算',bounty:900,intro:'900 銀幣終於從托管裡出來了。但它不會整筆進你的錢箱。',note:'這就是一單正常的生意。'});}}]);
+}
+
+/* ========== 小委託 ========== */
+function N_job(t){
+  const J=t==='grave'?{title:'墓園的吸魂鵝',meta:['委託人：教區執事','路程：3 天'],bounty:'240 銀',body:'一群吸魂鵝在墓園裡過冬，守墓人不敢夜巡。風險低，火術能省事。'}
+    :{title:'護送一車月光草',meta:['委託人：草藥商','路程：2 天'],bounty:'200 銀',body:'月光草要在露水乾以前送到下游炼金鋪。路上偶爾有攔路賊。'};
+  return notice({...J,small:1,btn:B('接下',()=>jobStart(t))});
+}
+function jobStart(t){
+  const grave=t==='grave';
+  newMission({id:'job',name:grave?'墓園的吸魂鵝':'護送月光草',bounty:grave?240:200,rationDays:grave?3:2,market:['crystal','healmat','antidote'],escrow:grave?240:200,
+    hints:()=>grave?[[S.inv.crystal>=1&&has('mage'),'魔晶粉 1 份：火術驅散鵝群']]:[[has('tank'),'重裝戰士隨隊：嚇退攔路賊']],
+    go:()=>expedition({biome:grave?'grave':'road',monster:grave?'goose':null,days:grave?3:2,events:{},onArrive:X=>{
+      const L=[];
+      if(grave){ if(has('mage')&&S.inv.crystal>0){S.inv.crystal--;L.push(['g','一份魔晶粉，火光一亮，鵝群全散了。']);} else if(rnd()<0.5){const m=injure(1);L.push(['w',`${m?m.name:'有人'}被吸走一口精神，輕傷。`]);} else L.push(['g','費了點工夫，總算趕走了。']); }
+      else { if(rnd()<0.4){ if(has('tank')) L.push(['g','攔路賊看見鮑爾的鎧甲，自己讓開了。']); else {const m=injure(1);L.push(['w',`遇上攔路賊，${m?m.name:'有人'}輕傷。`]);} } else L.push(['g','一路平安，露水乾以前送到。']); }
+      battle(X,()=>card('完成',res(L),[{label:'回城結算',cls:'pri',fn:()=>settle({title:S.M.name+'・結算',bounty:S.M.bounty,note:'沒什麼傳奇色彩。按時採購、按時出發、完成驗收、收到報酬。'})}]));}}),
+    back:()=>{S.M=null;goHall();}});
+  market();
+}
+
+/* ========== 委託二：葡萄園石化蜥蜴 ========== */
+function N_c2(){return notice({title:'葡萄園地窖裡的石化蜥蜴',meta:['委託人：葡萄園主','路程：1 天'],bounty:'600 銀',body:'地窖裡有一隻成年石化蜥蜴。離城只有一天，看起來比食屍鬼簡單。旁邊已經有一支新隊伍報價 480。',btn:B('查看委託',c2Intel)});}
+function c2Intel(){
+  if(!S.M||S.M.id!=='c2') newMission({id:'c2',name:'葡萄園地窖的石化蜥蜴',bounty:600,rationDays:3,market:['repair','antipetri','mirror','mapper','crystal','healmat'],stock:{antipetri:4},
+    hints:()=>{const M=S.M;return[[S.inv.antipetri>=3,'抗石化藥劑至少 3 瓶'],[S.inv.mirror>=2,'銀背戰鏡 2 面'],[M.svc.mapper,'測繪師：地下建築'],[S.inv.crystal>=2,'魔晶粉 2 份（以防需要用火）'],[has('heal')&&S.inv.healmat>=1,'治療者＋高階材料：解除早期石化']];},
+    go:c2Go,back:null});
+  const M=S.M;
+  screen(()=>`<div><h2>${M.name}</h2><p class="lede">若只看路程和怪物數量，你似乎也該降價。可是石化蜥蜴的目光會讓活體組織逐漸礦化。盾牌擋得住，卻不能逆轉。</p></div>
+   <div class="split"><div class="panel"><h4>已知情報</h4><ul class="intel">
+     <li>委託人說：地窖裡只有一隻成年個體</li><li>地窖外有三種大小不同的足迹</li><li>抗石化藥劑漲到每瓶 60 銀，每隊限購 4 瓶</li><li>契約禁止大範圍用火：酒桶本身比賞金值錢</li>
+     ${M.scouted?'<li class="new">鑑定師檢查了牆邊的石化鼠屍、糞便和鱗片：裡面至少有兩隻成年個體</li>':''}</ul></div>
+   <div class="panel"><h4>報價</h4>
+     <div class="choices">${M.scouted?'':B('雇怪物鑑定師',()=>{if(S.chest<15)return toast('錢箱不夠');spend(15);M.scouted=true;c2Intel();},{sub:'15 銀・他不進地窖，只看痕跡'})}
+     ${B('接受 600，標準條款',()=>{M.bounty=600;M.escrow=600;M.clause=false;market();})}
+     ${B('降到 480，搶下這單',()=>{M.bounty=480;M.escrow=480;M.clause=false;market();},{sub:'贏過新隊伍'})}
+     ${B('報價 800，寫入撤退與重新定價條款',c2Refused,{sub:'若成年目標超過兩隻，可撤退、重新調查、追加賞金'})}${B('回到公告板',goHall)}</div></div></div>`);
+}
+function c2Refused(){
+  const M=S.M;
+  screen(()=>`<h2>葡萄園主拒絕了</h2><p class="lede">他指著那支報價更低的新隊伍：「他們今天就能出發。」你把任務讓給了他們。</p><div class="row">${B('等消息',()=>{S.day+=3;c2Return();},{cls:'pri',sub:'3 天後'})}</div>`);
+}
+function c2Return(){
+  const M=S.M;
+  screen(()=>`<h2>那支隊伍被抬回城裡</h2><p class="lede">五個人只回來四個，兩套裝備留在地窖。隊長的左臂已經石化。他們沒有隨隊治療者，只能等神殿完成其他長期契約後再接診。解除石化的費用，超過了他們原本的全部賞金。</p>
+    <div class="panel"><p>葡萄園主再次來到公會。地窖裡確認有 <b>3 隻</b>，酒窖的損失還在擴大。他把賞金提高到 <b class="num">1,200</b> 銀，也接受了條件變化條款。</p>
+    <p class="muted">不是你突然變勇敢了，只是任務的真實成本終於寫進了價格。前期成本會很高，可托管裡的 1,200 銀現在一枚也幫不上忙。</p></div>
+    <div class="choices">${B('接受，並談一筆有限預付',()=>{M.bounty=1200;M.escrow=1200;M.clause=true;M.advance=80;S.chest+=80;M.rel=1;market();},{cls:'pri',sub:'公會從托管釋放 80 銀，只能用於測繪與裝備；無故放棄須償還'})}
+    ${B('接受，不要預付',()=>{M.bounty=1200;M.escrow=1200;M.clause=true;market();})}</div>`);
+}
+function c2Go(){
+  expedition({biome:'cellar',monster:'lizard',days:1,events:{},onArrive:X=>c2Cellar(X)});
+}
+function c2Cellar(X){
+  const M=S.M;
+  const intro=`<p>${M.clause?'三隻都在，':'委託人說只有一隻，可是眼前有三隻。'}其中一隻正在蛻皮。蛻皮期間牠控制不住目光，石化會從直視擴散到鏡面反光。原本保護你們的銀背戰鏡，現在可能把危險反射到整個房間。</p>`;
+  const opts=[];
+  if(M.clause) opts.push({label:'撤出地窖，啟動條件變化條款',sub:'暫停任務，不算違約',cls:'pri',fn:()=>c2Renego(X)});
+  opts.push({label:'硬上，靠鏡子和藥劑',sub:'石化風險高',fn:()=>battle(X,()=>c2Fight(X,'push'))});
+  opts.push({label:'讓艾絲放火燻牠們閉眼',sub:has('mage')?'違反契約的用火限制，酒桶會燒壞':'火術師不在隊上',dis:!has('mage'),fn:()=>battle(X,()=>c2Fight(X,'fire'))});
+  if(!M.clause) opts.push({label:'放棄任務撤退',sub:'沒有撤退條款，這算違約',fn:()=>c2Forfeit()});
+  card('地窖裡有三隻',intro,opts);
+}
+function c2Renego(X){
+  const M=S.M;
+  card('暫停任務','<p>已經消耗的口糧、測繪費和藥劑不會回來。但條件變化條款讓你們可以停下，不算違約。</p><p>公會重新評估後，葡萄園主同意把最深處兩排酒桶列為可接受損失，艾絲也拿到受控火焰的書面許可。</p>',[
+    {label:'兩天後第二次進入',cls:'pri',sub:'多扣 10 銀口糧',fn:()=>{spend(10);S.day+=2;renderHUD();X.monster=0;X.arrived=true;setTimeout(()=>{X.monster=1;},50);battle(X,()=>c2Fight(X,'renego'));}}]);
+}
+function needCrystal(n,L){
+  if(S.inv.crystal<n){const lack=n-S.inv.crystal, c=lack*35; spend(c); S.inv.crystal+=lack; L.push(['w',`魔晶粉不夠，就地向炼金鋪加價調了 ${lack} 份，花 ${c} 銀。`]);}
+  S.inv.crystal-=n;
+}
+function c2Fight(X,mode){
+  const M=S.M, L=[]; let hits, unresolved=0, dmg=0;
+  if(mode==='push'){hits=3; if(S.inv.mirror>=2){hits--;L.push('兩面戰鏡擋下了一次直視。');} if(S.inv.mirror>0){hits++;L.push(['w','蛻皮那隻的目光從鏡面反射過來。']);} if(M.svc.mapper){hits--;L.push('測繪師指出側門，少挨一次埋伏。');} hits=Math.max(1,hits);}
+  else { hits=M.svc.mapper?0:1; needCrystal(2,L); L.push(mode==='renego'?'艾絲用受控火焰逼出高溫煙霧，蜥蜴紛紛閉眼。':'艾絲沒有許可就點了火。'); }
+  let used=0;
+  for(let i=0;i<hits;i++){const v=pick(participants().filter(m=>m.hp<2)); if(!v)break;
+    if(S.inv.antipetri>0){S.inv.antipetri--;used++;L.push(`${v.name}的手臂開始發灰，喝下抗石化藥劑。`);}
+    else if(has('heal')&&S.inv.healmat>0){S.inv.healmat--;v.hp=Math.max(v.hp,1);L.push(['w',`馬汀用高階材料解除了${v.name}的早期石化，留下輕傷。`]);}
+    else{v.hp=2;unresolved++;L.push(['b',`${v.name}的半身石化了，重傷。`]);}}
+  if(S.inv.mirror>0&&(mode==='renego'||rnd()<0.6)){S.inv.mirror--;L.push('一面銀背戰鏡碎了。');}
+  if(mode==='fire'){dmg=300;S.rep-=10;L.push(['b','燒壞的酒桶要照價賠償 300 銀，公會記你一筆。']);}
+  if(mode==='renego') L.push('損壞了十幾個酒桶，都在可接受損失範圍內。');
+  const ok=mode!=='push'||unresolved<2;
+  if(ok){ L.push(['g','三隻石化蜥蜴全數清除。']);
+    card('戰鬥結束',res(L),[{label:'回城驗收',cls:'pri',fn:()=>{S.progress=2;queueMidEvents();settle({title:'葡萄園委託結算',bounty:M.bounty,ded:dmg?[['酒桶賠償',dmg]]:[],note:S.inv.antipetri?`剩下 ${S.inv.antipetri} 瓶抗石化藥劑是庫存。可以留給下次，也可以賣回炼金鋪，但在賣掉以前，它不是利潤。`:(M.clause?'真正保住這筆利潤的，是契約裡的撤退條款。':'')});}}]);}
+  else { L.push(['b','兩個人石化，隊伍只能抬著傷員撤退。']);
+    card('撤退',res(L),[{label:'回城',cls:'pri',fn:()=>{S.rep-=10;S.progress=2;queueMidEvents();settle({title:'葡萄園委託：失敗',bounty:0,result:'失敗',intro:'托管的賞金退回給葡萄園主。準備的錢全部沉沒。',note:M.clause?'':'沒有撤退條款，也沒有重新定價。這就是那支 480 銀新隊伍會遇到的事。'});}}]);}
+}
+function c2Forfeit(){
+  S.rep-=15; S.progress=2; queueMidEvents();
+  card('違約撤退',res([['b','沒有撤退條款，放棄就是違約。公會聲望 −15。'],'準備的藥劑還在，但測繪費、口糧和時間都沒了。']),[{label:'回城',cls:'pri',fn:()=>settle({title:'葡萄園委託：違約',bounty:0,result:'違約',intro:'你沒有為錯誤情報拿命去補，但契約上也沒有任何東西保護你。'})}]);
+}
+
+/* ========== 季中事件 ========== */
+function queueMidEvents(){
+  if(S.flags.mid) return; S.flags.mid=1;
+  S.pending.push(evHealer,evRecruit);
+}
+function evHealer(){
+  const h=mem('heal'); if(!h){goHall();return;}
+  screen(()=>`<h2>北境領主在挖治療者</h2><p class="lede">邊境出現鷹身女妖遷徙，軍隊和商隊同時搶購治療名額。馬汀收到神殿邀請：加入北境醫療隊，就有固定報酬、食宿和材料供應。留在小隊，他只能等任務成功後分帳，還要親自進巢穴。</p>
+   <p class="quote">他沒有義務，只因為曾經並肩作戰，就永遠接受低於市場的價格。</p>
+   <div class="choices">
+    ${B('提高份額到 1.75，並保證危險任務固定專業費',()=>{h.share=1.75;h.loy=88;S.flags.healFee=40;evMage();},{cls:'pri',sub:'每趟危險任務先付 40 銀；他每月為小隊保留出勤日'})}
+    ${B('讓他走，改雇便宜學徒',()=>{S.members=S.members.filter(m=>m!==h);S.members.push({key:'appr',name:'小禾',role:'見習治療者',share:.75,color:'#c8d6b0',hp:0,loy:65,earned:0});goHall();},{sub:'學徒能處理割傷、骨折、普通毒素，處理不了深層傷勢'})}
+    ${B('用交情挽留',()=>{ if(rnd()<0.3){h.loy-=15;screen(`<h2>馬汀留下了</h2><p class="lede">他沒多說什麼，但你看得出他心裡在算。</p><div class="row">${B('回到大廳',goHall,{cls:'pri'})}</div>`);} else {S.members=S.members.filter(m=>m!==h);S.members.push({key:'appr',name:'小禾',role:'見習治療者',share:.75,color:'#c8d6b0',hp:0,loy:65,earned:0});screen(`<h2>馬汀去了北境</h2><p class="lede">交情付不了材料費。公會幫你介紹了一名見習治療者。</p><div class="row">${B('回到大廳',goHall,{cls:'pri'})}</div>`);} },{sub:'不花錢'})}
+   </div>`);
+}
+function evMage(){
+  const m=mem('mage'); if(!m){goHall();return;}
+  screen(()=>`<h2>艾絲也要求同樣待遇</h2><p class="lede">城裡還有幾名能提供戰鬥法術的施法者，必要時也能用炼金火罐替代一部分火術。能在 12 小時內解除深層詛咒的治療者，卻沒有便宜的替代品。</p>
+   <div class="choices">${B('拒絕，說明替代難度不同',()=>{m.loy-=8;goHall();},{cls:'pri',sub:'所有人都有基礎份額，不代表所有技能同價'})}
+   ${B('答應',()=>{S.flags.mageFee=40;m.loy=Math.min(100,m.loy+10);goHall();},{sub:'危險任務再多一筆 40 銀固定費'})}</div>`);
+}
+function evRecruit(){
+  screen(()=>`<h2>有人想加入</h2><p class="lede">鮑爾覺得是擴張的好機會：多一把劍可以輪換守夜，也能分擔搬運。</p>
+   <div class="split"><div class="panel"><h4>年輕劍士</h4><p>有公會初級認證，只要半份分紅。沒有對付變形怪物的紀錄，也沒有自己的抗毒裝備，要借共同庫存、要人帶。</p>
+     ${B('收為見習成員',()=>{if(S.chest<50)return toast('錢箱不夠買見習裝備');S.chest-=50;S.members.push({key:'trainee',name:'阿岳',role:'見習劍士',share:.5,color:'#9fb4c8',hp:0,loy:75,earned:0});goHall();},{cls:'pri',sub:'錢箱付 50 銀買見習裝備，產權歸小隊'})}</div>
+   <div class="panel"><h4>老練的怪物追蹤者</h4><p>要完整份額，外加每次出發前的固定費用。能少走冤枉路，不會踩亂足迹。</p>
+     ${B('雇用追蹤者',()=>{S.members.push({key:'tracker',name:'葛雷',role:'怪物追蹤者',share:1,color:'#a98a64',hp:0,loy:70,earned:0});goHall();},{sub:'份額 1，每趟危險任務 60 銀'})}</div></div>
+   <div class="row">${B('暫時不招人',goHall)}</div>`);
+}
+
+/* ========== 委託三：收費塔蠍獅 ========== */
+function N_c3(){return notice({title:'王道收費塔的蠍獅',meta:['委託人：領主','路程：約 6 天'],bounty:'30 金幣（3,000 銀）',body:'蠍獅占據廢棄收費塔，連接兩座城市的大道斷了。商隊繞行 12 天，領主的稅收也在掉。屍體本身的材料，估值可能接近懸賞。',btn:B('查看委託',c3Intel)});}
+function c3Intel(){
+  if(!S.M||S.M.id!=='c3') newMission({id:'c3',name:'王道收費塔的蠍獅',bounty:3000,rationDays:6,rationRate:7,danger:true,market:['processor','saltbox','porters','repair','antidote','crystal','healmat'],stock:{antidote:3},
+    prop:false,cond:false,capture:false,investor:false,
+    hints:()=>{const M=S.M;return[[M.svc.processor,'怪物處理師：尾囊與翼膜要專業剝取'],[M.svc.saltbox,'銀鹽容器：心臟要在一天內封存'],[M.svc.porters,'搬運工：沒人搬，材料只能爛在塔邊'],[S.inv.antidote>=1,'解毒劑：蠍尾的毒'],[S.inv.crystal>=2,'魔晶粉 2 份：火術壓制'],[has('heal')&&S.inv.healmat>=1,'治療者＋高階材料：魔力灼傷']];},
+    go:c3Go,back:c3Intel});
+  const M=S.M;
+  if(mem('tracker')) M.rationDays=4;
+  const ck=(k,label,sub)=>B(`${M[k]?'■':'□'} ${label}`,()=>{
+    if(k==='investor'){ if(M.investor){if(S.chest<200)return toast('錢已經花掉了，退不回去');S.chest-=200;} else S.chest+=200; }
+    M[k]=!M[k];c3Intel();},{sub});
+  screen(()=>`<div><h2>${M.name}</h2><p class="lede">三千銀幣夠普通勞工做好幾年，大廳裡所有人都盯著這塊公告。但 30 枚金幣的懸賞，不是 30 枚金幣的利潤。</p></div>
+   <div class="split"><div class="panel"><h4>戰利品估值（理想狀況）</h4><ul class="intel">
+     <li>尾囊 約 500：死後幾小時開始分解，要處理師取出</li><li>翼膜 約 900：要熟練剝皮師完整取下</li><li>心臟 約 1,400：必須泡進銀鹽，一天內送進炼金作坊</li><li>骨材 約 400：要人搬，賣得掉才算錢</li></ul>
+     <p class="muted">收費塔在王室道路上，附近土地歸領主。契約不寫清楚，屍體可能被算成領地資源。</p></div>
+   <div class="panel"><h4>契約條款</h4><div class="choices">
+     ${ck('prop','寫清楚屍體產權','頭顱歸領主做完成證明；心臟售出後領主分 20%')}
+     ${ck('cond','完成條件改成「確認死亡」','原文只寫「清除蠍獅威脅」，趕走也算')}
+     ${ck('capture','接受活捉附加報酬 +800','要鎮靜劑和鐵籠 300 銀，活捉就沒有戰利品')}
+     ${ck('investor','接受鹽商出資 200 銀','成功後先還本金，再分戰利品淨收益 20%；失敗且無過失，他自己吞')}
+     ${B('簽約，去採購',()=>{M.escrow=3000;market();},{cls:'pri'})}${B('回到公告板',goHall,{dis:M.investor,sub:M.investor?'已收鹽商的錢，先退掉出資才能離開':''})}</div></div></div>`);
+}
+function c3Go(){
+  const M=S.M, ex=(M.svc.porters?2:0)+(M.svc.processor?1:0);
+  expedition({biome:'road',monster:'manticore',days:M.rationDays,extras:ex,events:{
+    2:X=>{ if(has('tracker')){card('追蹤','<p>葛雷沿著被拖行的商隊殘骸，直接找到蠍獅的進食路線。</p>',[{label:'繼續',fn:X.resume}]);return;}
+      if(has('trainee')&&rnd()<0.5){spend(14);X.days+=2;card('追蹤',res([['w','阿岳踩亂了一段足迹。多走 2 天，口糧多扣 14 銀。'],'省下的半份報酬，變成全隊多吃的口糧。']),[{label:'繼續',fn:X.resume}]);return;}
+      card('追蹤','<p>琳恩找到了足迹，順著走就是收費塔。</p>',[{label:'繼續',fn:X.resume}]);},
+  },onArrive:X=>card('收費塔下','<p>蠍獅比公會估計的更老，翼膜上布滿舊傷。</p>',[{label:'開戰',cls:'pri',fn:()=>battle(X,()=>c3Fight(X))}])});
+}
+function c3Fight(X){
+  const M=S.M, L=[];
+  const v=pick(participants().filter(m=>m.hp<2))||mem('cap');
+  if(S.inv.antidote>0){S.inv.antidote--;L.push(`蠍尾刺中${v.name}，解毒劑壓住了毒。`);} else {v.hp=2;L.push(['b',`蠍尾刺中${v.name}，沒有解毒劑，重傷。`]);}
+  if(has('mage')){
+    if(S.inv.crystal>=2){S.inv.crystal-=2;L.push('艾絲燒掉兩份魔晶粉，把蠍獅壓在塔下。');} else {S.inv.crystal=0;const m=injure(1);L.push(['w',`魔晶粉不夠，戰鬥拖長，${m?m.name:'有人'}輕傷。`]);}
+    if(has('trainee')) L.push(['g','阿岳沒有去追擊，而是守在撤退路線上。這個位置不夠英勇，卻讓艾絲避開了第二次撲擊。']);
+    else { const mg=mem('mage');
+      if(has('heal')&&S.inv.healmat>0){S.inv.healmat--;mg.hp=Math.max(mg.hp,1);L.push(['w','艾絲胸口被魔力灼傷。馬汀用掉一份高階材料穩住了傷勢。']);}
+      else {mg.hp=2;L.push(['b','艾絲胸口被魔力灼傷，沒人處理得了。她能活著回去，但幾個月無法施法。']);} }
+  }
+  if(!M.cond){
+    L.push(['w','蠍獅重傷後振翅往鄰近領地飛去。']);
+    card('牠跑了',res(L)+'<p>契約只寫「清除威脅」。趕走也算數嗎？</p>',[
+      {label:'追擊 3 天，確認死亡',sub:'口糧 +21 銀',cls:'pri',fn:()=>{spend(21);S.day+=3;c3Kill(X,L.concat(['追了三天，終於在峽谷裡了結牠。']));}},
+      {label:'回報「已驅離」',sub:'領主的路恢復了，鄰居卻多了一隻憤怒的蠍獅',fn:()=>{S.rep-=10;S.progress=3;settle({title:'蠍獅委託：驅離',bounty:1800,result:'驅離',ded:M.investor?[['鹽商出資本金',200]]:[],intro:'領主爭執了一陣，只肯付 60%。沒有屍體，也就沒有戰利品。',note:'你完成了一份合同，順手製造出下一份懸賞。',after:goHall});}}]);
+    return;
+  }
+  c3Kill(X,L);
+}
+function c3Kill(X,L){
+  const M=S.M;
+  if(M.capture){
+    if(M.svc.porters&&rnd()<0.6){L.push(['g','鎮靜劑起效，蠍獅被關進鐵籠，移交王室怪物署。']);
+      card('活捉成功',res(L),[{label:'回城驗收',cls:'pri',fn:()=>{S.progress=3;settle({title:'蠍獅委託結算',bounty:3800,ded:M.investor?[['鹽商出資本金',200]]:[],intro:'活捉附加報酬到手，但活體沒有任何材料能賣。',after:goHall});}}]);return;}
+    L.push(['w','鎮靜劑劑量不夠，只能當場殺死。鐵籠的錢白花了。']);
+  }
+  L.push(['g','蠍獅倒下了。']);
+  card('戰鬥結束',res(L)+'<p class="muted">所有人都想休息。殺死怪物只是前半段，把屍體變成買家肯付錢的材料，才是後半段。</p>',[{label:'處理屍體',cls:'pri',fn:()=>c3Loot(X)}]);
+}
+function c3Loot(X){
+  const M=S.M, loot=[], notes=[];
+  if(!M.prop){ notes.push(['b','領主的管事趕到，主張收費塔周邊的怪物屍體屬於領地資源。契約沒寫清楚，戰利品全數歸領主。']);
+    return card('屍體歸誰',res(notes),[{label:'回城驗收',cls:'pri',fn:()=>c3Settle([],[])}]); }
+  if(M.svc.processor){loot.push(['尾囊（炼金商當場付款）',520]);loot.push(['翼膜（舊傷，只賣到估值一半）',450]);notes.push('處理師取出尾囊、剝下翼膜。');}
+  else {loot.push(['翼膜（外行剝取，破損嚴重）',120]);notes.push(['w','沒有處理師，尾囊在幾小時內開始分解。']);}
+  const heart=next=>{
+    if(!M.svc.saltbox){notes.push(['b','沒有銀鹽容器，心臟的魔力在回城前散光了。']);return next();}
+    card('心臟怎麼送',res(notes)+'<p>心臟已經沉進銀鹽。單位重量價值很高，保存時限又短。</p>',[
+      {label:'付高價走快速馬車',sub:'150 銀，約 1,400 估值',cls:'pri',fn:()=>{loot.push(['心臟（快速送達）',1400]);M.heartTrans=150;next();}},
+      {label:'跟其他材料一起走普通馬車',sub:'免費，到城時魔力流失大半',fn:()=>{loot.push(['心臟（魔力流失）',350]);next();}}]);};
+  const bones=()=>{
+    if(!M.svc.processor&&!M.svc.porters){notes.push(['w','沒人搬得動骨材，只能留在塔邊。']);return c3Settle(loot,notes);}
+    card('骨材',`<p>骨材送進公會倉庫等附魔師競價。倉儲、防腐、拍賣都要收費。冬季軍需採購時也許能賣得更好，但下週就要修鎧甲、付專業費。</p>`,[
+      {label:'立刻賣掉',sub:'220 銀現金',cls:'pri',fn:()=>{loot.push(['骨材（降價即售）',220]);c3Settle(loot,notes);}},
+      {label:'留作庫存',sub:'帳上估值 400，但現在一枚也拿不到',fn:()=>{S.bones=400;c3Settle(loot,notes);}}]);};
+  heart(bones);
+}
+function c3Settle(loot,notes){
+  const M=S.M, ded=[];
+  const sold=loot.reduce((a,l)=>a+l[1],0);
+  if(M.heartTrans) ded.push(['心臟快速運輸',M.heartTrans]);
+  if(M.svc.processor&&sold) ded.push(['怪物處理師分成 10%',Math.round(sold*0.1)]);
+  const heart=loot.find(l=>l[0].startsWith('心臟'));
+  if(heart) ded.push(['領主分得心臟售款 20%',Math.round(heart[1]*0.2)]);
+  if(M.investor){ const net=sold-ded.reduce((a,d)=>a+d[1],0); ded.push(['鹽商出資本金',200]); if(net>0) ded.push(['鹽商分得戰利品淨收益 20%',Math.round(net*0.2)]); }
+  S.progress=3;
+  settle({title:'蠍獅委託結算',bounty:3000,loot,ded,intro:'一隻怪物倒下，錢卻流向了十幾種人。',note:S.bones?'骨材單獨記在庫存底下，不算進現金。':'',after:goHall});
+}
+
+/* ========== 年終與破產 ========== */
+function yearEnd(){
+  const invV=S.inv.antidote*35+S.inv.antipetri*60+S.inv.mirror*40+S.inv.crystal*25+S.inv.healmat*50;
+  const fails=S.records.filter(r=>r.result!=='成功').length;
+  const verdict=S.chest>=600&&fails===0?'這本帳很健康。沒有太多值得吟遊詩人傳唱的故事，但所有人都活著回來了。'
+    :S.chest>=300?'小隊撐過了這一年。有幾筆錢付得冤枉，下一年的定價會更清醒。'
+    :'錢箱很薄。每次成功都有進帳，最後卻差點破產，這種小隊並不少見。';
+  screen(()=>`<div><h2>年底，帳本攤在公會的長桌上</h2><p class="lede">${verdict}</p></div>
+    <div class="tbl-wrap"><table class="rec"><thead><tr><th>委託</th><th>結果</th><th class="n">賞金</th><th class="n">任務支出</th><th class="n">分出去的盈餘</th><th class="n">結算後錢箱</th></tr></thead>
+    <tbody>${S.records.map(r=>`<tr><td>${r.name}</td><td>${r.result}</td><td class="n">${fmt(r.bounty)}</td><td class="n">${fmt(r.spent)}</td><td class="n">${fmt(r.dist)}</td><td class="n">${fmt(r.chest)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="split"><div class="panel"><h4>資產</h4><div class="fees num">
+      <div><span>共同錢箱（現金）</span><span>${fmt(S.chest)} 銀</span></div>
+      <div><span>未用藥劑與裝備（按進價）</span><span>${fmt(invV)} 銀</span></div>
+      ${S.bones?`<div><span>蠍獅骨材（庫存估值，未變現）</span><span>${fmt(S.bones)} 銀</span></div>`:''}
+      <div class="tot"><span>你個人一年的分紅</span><span>${fmt(S.yours)} 銀</span></div></div></div>
+    <div class="panel"><h4>成員</h4><div class="fees num">${S.members.map(m=>`<div><span>${m.name}・${m.role}</span><span>${fmt(m.earned)} 銀</span></div>`).join('')}</div></div></div>
+    <p class="quote">活著回來不是對利潤的妥協。對這門生意來說，活著回來就是在維護產能。</p>
+    <div class="row">${B('再經營一年（重新開始）',()=>{newGame();goHall();},{cls:'pri'})}</div>`);
+}
+function bankrupt(){
+  screen(()=>`<h2>錢箱見底了</h2><p class="lede">托管裡也許還有錢，公告板上也許還有好委託，可你們付不起下一趟的口糧和馬料。一支小隊完全可能每次成功都在賺錢，最後卻還是破產。</p><div class="row">${B('重新開始',()=>{newGame();goHall();},{cls:'pri'})}</div>`);
+}
+
+newGame(); goHall();
+</script>
+
+</body>
+</html>
