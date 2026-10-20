@@ -12,6 +12,7 @@ const RC = {
   bandits:  {monster: 'bandit',    biome: 'road',   base: 380,  days: 4, danger: 2, count: [5, 8], tags: ['ambush', 'armor'],      hidden: ['far'], req: {role: 'scout', lv: 3}},
   harpies:  {monster: 'goose',     biome: 'road',   base: 520,  days: 5, danger: 2, count: [4, 6], tags: ['fire', 'far'],          hidden: ['curse'], req: {role: 'mage', lv: 3}},
   mine:     {monster: 'lizard',    biome: 'mine',   base: 650,  days: 3, danger: 3, count: [1, 2], tags: ['petrify', 'under'],     hidden: ['armor'], req: {front: 2}},
+  charter:  {monster: 'bandit',    biome: 'harbor', base: 380,  days: 2, danger: 1, count: [3, 5], tags: ['ambush'],               hidden: [], special: true},
   wyvern:   {monster: 'manticore', biome: 'road',   base: 1100, days: 6, danger: 4, count: [1, 1], tags: ['poison', 'fire', 'loot'], hidden: ['armor'], minYear: 1, req: {front: 3}},
 };
 const PLACE_COUNT = 12;
@@ -81,7 +82,7 @@ const reqText = req => req.role ? t('req.role', {role: t('r.' + req.role), lv: r
 const GEAR_REWARD_TPL = ['escort', 'bandits', 'mine', 'crypt'];
 function genContract() {
   const year = S.year;
-  const ids = Object.keys(RC).filter(id => (RC[id].minYear || 0) < year || RC[id].danger <= 3);
+  const ids = Object.keys(RC).filter(id => !RC[id].special && ((RC[id].minYear || 0) < year || RC[id].danger <= 3));
   const id = pick(ids), T = RC[id];
   const D = T.danger + Math.floor((year - 1) * 0.6);
   const scale = 1 + 0.3 * (year - 1);

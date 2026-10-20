@@ -23,17 +23,17 @@ function goHall() {
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
   if (!S.mkt) rollMarket();
   if (S.seasonIdx < sIdx) { rollMarket(); S.cands = null; }
-  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); maybePoach(); }
+  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); maybePoach(); herbSeason(); }
   fillBoard();
   saveGame();
   // 破產：錢箱連最便宜的一趟口糧都付不起
-  const cheapest = Math.min(...S.board.map(c => c.days * 5), S.progress < 3 ? 15 : Infinity);
+  const cheapest = Math.min(...S.board.map(c => c.days * 5), mainlineAvailable().length ? 15 : Infinity);
   if (S.chest < Math.min(cheapest, 40)) { bankrupt(); return; }
   newGameArmed = false;
   const showIntro = !S.started, dues = S.duesNote;
   S.started = true; S.duesNote = 0;
   screen(() => {
-    const notices = Object.values(CONTRACTS).filter(c => c.progress === S.progress).map(c => c.notice()).concat(S.board.map(rcNotice));
+    const notices = mainlineAvailable().map(c => c.notice()).concat(S.board.map(rcNotice));
     const sick = S.members.filter(m => m.hp === 2);
     return `
     ${showIntro ? `<div class="panel"><h4>${t('hall.intro.title')}</h4><p>${t('hall.intro.body')}</p></div>` : ''}
@@ -41,10 +41,12 @@ function goHall() {
     <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><div class="row"><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span>${B(t('ms.open'), membersScreen, {cls: 'ghost'})}</div></div>
     <div class="board">${notices.join('')}</div>
     <p class="muted">${t('hall.next', {d: SEASON_DAYS - (S.day - 1) % SEASON_DAYS, n: fmt(seasonDues())})}</p>
+    ${mainlinePanel()}
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {
       if (S.chest < 80) return toast(t('hall.sick.toast')); S.chest -= 80; m.hp = 0; goHall();
     }, {sub: t('hall.sick.cost')})).join('')}</div></div>` : ''}
     ${marketPanel()}
+    ${herbPanel()}
     ${peoplePanel()}
     <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }

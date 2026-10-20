@@ -174,3 +174,9 @@ details.fire summary:focus-visible{outline:2px solid var(--brass);outline-offset
 .gearrw{display:block;font-family:var(--f-body);font-size:12px;color:#5d5140}
 .intel .ok{color:var(--good)}
 .intel .warn{color:var(--warn)}
+.ledgerwrap{display:grid;grid-template-columns:minmax(0,640px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.ledgerwrap{grid-template-columns:1fr}}
+.lesson{background:var(--panel2);border-radius:10px;padding:16px;border-top:3px solid var(--teal);display:grid;gap:8px;max-width:60ch}
+.lesson h4{color:var(--teal);font-size:16px}
+.lesson p{font-size:14px;line-height:1.75}
+.lede.b{color:var(--bad)}

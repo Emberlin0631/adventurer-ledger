@@ -60,7 +60,8 @@ function settle(o) {
       : `${pool < 0 ? `<div class="ln neg" ${st()}><span>${t('st.repay')}</span><span>−${fmt(-pool)}</span></div>` : ''}<div class="ln note" ${st()}><span>${loss > 0 ? t('st.loss', {n: fmt(loss)}) : t('st.even')}</span><span></span></div>`;
     $('#main').innerHTML = `<div><h2>${title}</h2>${intro ? `<p class="lede">${intro}</p>` : ''}</div>
       ${deaths.out.length ? `<div class="card" style="border-left-color:${deaths.dead.length ? 'var(--wax)' : 'var(--good)'}"><h4>${t(deaths.dead.length ? 'dth.title' : 'dth.titleSaved')}</h4>${res(deaths.out)}</div>` : ''}
-      <div class="ledger"><h3>${t('st.ledger')}</h3>${lh}${tail}${note ? `<div class="ln note" ${st()}><span>${note}</span><span></span></div>` : ''}</div>
+      <div class="ledgerwrap"><div class="ledger"><h3>${t('st.ledger')}</h3>${lh}${tail}${note ? `<div class="ln note" ${st()}><span>${note}</span><span></span></div>` : ''}</div>
+      ${o.lesson ? `<aside class="lesson"><h4>${t('lesson.title', {c: t('lesson.' + o.lesson + '.name')})}</h4><p>${t('lesson.' + o.lesson + '.body', o.lessonP || {})}</p></aside>` : ''}</div>
       <div class="row" id="sbtn"></div>`;
     clearReg();
     $('#sbtn').innerHTML = B(rest > 0 ? t('st.confirm') : t('st.close'), () => apply(reserve, dist), {cls: 'pri'});

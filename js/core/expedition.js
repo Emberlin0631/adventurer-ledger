@@ -6,6 +6,8 @@ const BIOME = {
   grave:  {sky: ['#20263a', '#4e4d62'], hill: '#2a2d36', ground: '#3a3d35', ground2: '#2a2c26'},
   forest: {sky: ['#2f4038', '#77806a'], hill: '#24322a', ground: '#3b4630', ground2: '#2a3322'},
   mine:   {sky: ['#141312', '#26221e'], hill: '#2e2924', ground: '#3d3630', ground2: '#2a2520'},
+  snow:   {sky: ['#5b6b80', '#c9d3dc'], hill: '#9fb0bf', ground: '#dfe6ec', ground2: '#c3ced8'},
+  harbor: {sky: ['#2b3a55', '#c98a5e'], hill: '#3b4658', ground: '#6b4f36', ground2: '#4f3a28'},
 };
 function expedition(o) {
   screen(`<div class="exp"><canvas id="cv"></canvas><div class="exp-day" id="expday">${t('exp.depart')}</div></div><div id="evbox" class="evbox"><div class="card"><h4>${missionName(S.M)}</h4><p class="muted">${t('exp.leave')}</p></div></div>`);
@@ -76,6 +78,18 @@ function draw(g, cv, X, o, now, dpr) {
     for (let i = -1; i < W / 140 + 2; i++) { const x = i * 140 - (X.off * 0.6 % 140); g.beginPath(); g.moveTo(x, 160); g.lineTo(x, 50); g.lineTo(x + 90, 50); g.lineTo(x + 90, 160); g.stroke(); }
     g.fillStyle = 'rgba(240,190,90,.55)'; for (let i = -1; i < W / 140 + 2; i++) { const x = i * 140 - (X.off * 0.6 % 140) + 45; g.beginPath(); g.arc(x, 64, 4, 0, 7); g.fill(); }
   }
+  if (o.biome === 'snow') {
+    for (let i = -1; i < W / 55 + 2; i++) { const x = i * 55 - (X.off * 0.7 % 55) + (i % 3) * 8, h = 60 + (i % 4) * 12;
+      g.fillStyle = '#3c4a44'; g.beginPath(); g.moveTo(x - 6, 160 - h * 0.3); g.lineTo(x + 10, 160 - h); g.lineTo(x + 26, 160 - h * 0.3); g.fill();
+      g.fillStyle = '#eef3f6'; g.beginPath(); g.moveTo(x + 4, 160 - h * 0.8); g.lineTo(x + 10, 160 - h); g.lineTo(x + 16, 160 - h * 0.8); g.fill(); }
+    if (!RM) { g.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 40; i++) { const sx = (i * 97 + now * 0.02 * (1 + i % 3)) % (W + 10), sy = (i * 53 + now * 0.03 * (1 + i % 2)) % H; g.fillRect(sx, sy, 2, 2); } }
+  }
+  if (o.biome === 'harbor') {
+    g.fillStyle = '#2f4a63'; g.fillRect(-5, 120, W + 10, 40);
+    g.strokeStyle = 'rgba(220,235,245,.35)'; g.lineWidth = 1.5;
+    for (let r = 0; r < 3; r++) { g.beginPath(); for (let x = -5; x <= W + 5; x += 10) g.lineTo(x, 128 + r * 10 + Math.sin((x + now * 0.05 + r * 40) / 18) * 2); g.stroke(); }
+    g.fillStyle = '#3a2c20'; for (let i = -1; i < W / 80 + 2; i++) { const x = i * 80 - (X.off % 80); g.fillRect(x, 146, 6, 18); }
+  }
   g.fillStyle = b.ground; g.fillRect(-5, 158, W + 10, H - 158);
   g.fillStyle = b.ground2; for (let i = -1; i < W / 40 + 2; i++) { const x = i * 40 - (X.off % 40); g.fillRect(x, 170 + (i % 3) * 9, 18, 3); }
   if (o.biome === 'swamp') {
@@ -113,11 +127,12 @@ function drawMonster(g, type, x, y, now) {
     g.fillStyle = '#c9c06a'; g.beginPath(); g.moveTo(x + 80, y - 78 + br); g.lineTo(x + 74, y - 66); g.lineTo(x + 86, y - 66); g.fill();
     g.fillStyle = 'rgba(120,90,70,.75)'; g.beginPath(); g.moveTo(x + 20, y - 40); g.lineTo(x + 50, y - 80 + br * 2); g.lineTo(x + 62, y - 38); g.fill();
     g.fillStyle = '#f0d070'; g.fillRect(x - 7, y - 41 + br, 3, 2);
-  } else if (type === 'wolf') {
-    for (let i = 0; i < 4; i++) { const ox = x + i * 28, oy = y - (i % 2) * 2; g.fillStyle = i % 2 ? '#7d7f84' : '#66686e';
+  } else if (type === 'wolf' || type === 'frostwolf') {
+    const fw = type === 'frostwolf';
+    for (let i = 0; i < 4; i++) { const ox = x + i * 28, oy = y - (i % 2) * 2; g.fillStyle = fw ? (i % 2 ? '#e6edf2' : '#c9d6df') : (i % 2 ? '#7d7f84' : '#66686e');
       g.beginPath(); g.ellipse(ox, oy - 12 + br * .5, 13, 6, 0, 0, 7); g.fill(); g.beginPath(); g.moveTo(ox - 11, oy - 15); g.lineTo(ox - 22, oy - 13); g.lineTo(ox - 13, oy - 8); g.fill();
       g.beginPath(); g.moveTo(ox - 14, oy - 16); g.lineTo(ox - 12, oy - 22); g.lineTo(ox - 9, oy - 16); g.fill(); g.fillRect(ox - 9, oy - 8, 3, 8); g.fillRect(ox + 7, oy - 8, 3, 8);
-      g.strokeStyle = g.fillStyle; g.lineWidth = 3; g.beginPath(); g.moveTo(ox + 12, oy - 13); g.lineTo(ox + 20, oy - 18); g.stroke(); g.fillStyle = '#f0e070'; g.fillRect(ox - 17, oy - 15, 2, 2); }
+      g.strokeStyle = g.fillStyle; g.lineWidth = 3; g.beginPath(); g.moveTo(ox + 12, oy - 13); g.lineTo(ox + 20, oy - 18); g.stroke(); g.fillStyle = fw ? '#7fd4ff' : '#f0e070'; g.fillRect(ox - 17, oy - 15, 2, 2); }
   } else if (type === 'bandit') {
     for (let i = 0; i < 4; i++) { const ox = x + i * 20, oy = y; g.fillStyle = ['#5a4a3a', '#4a4038', '#6a5040', '#504840'][i];
       g.fillRect(ox - 5, oy - 20, 10, 15); g.fillRect(ox - 4, oy - 6, 3, 6); g.fillRect(ox + 1, oy - 6, 3, 6);
@@ -127,6 +142,29 @@ function drawMonster(g, type, x, y, now) {
     for (let i = 0; i < 4; i++) { const ox = x + i * 26, oy = y - Math.abs(Math.sin(now / 400 + i)) * 4; g.fillStyle = i % 2 ? '#6f7d3a' : '#5b6a30';
       g.beginPath(); g.ellipse(ox, oy - 8, 12, 9, 0, 0, 7); g.fill(); g.fillStyle = '#c9b84a'; g.beginPath(); g.arc(ox - 6, oy - 15, 3, 0, 7); g.arc(ox + 4, oy - 15, 3, 0, 7); g.fill();
       g.fillStyle = 'rgba(160,200,90,.5)'; g.beginPath(); g.arc(ox + 8, oy - 4, 2, 0, 7); g.fill(); }
+  } else if (type === 'troll') {
+    g.fillStyle = '#6f7d5a'; g.beginPath(); g.ellipse(x + 10, y - 34 + br, 20, 28, 0.15, 0, 7); g.fill();
+    g.beginPath(); g.arc(x - 6, y - 64 + br, 11, 0, 7); g.fill();
+    g.fillRect(x - 2, y - 12, 9, 12); g.fillRect(x + 14, y - 12, 9, 12);
+    g.strokeStyle = '#6f7d5a'; g.lineWidth = 7; g.beginPath(); g.moveTo(x - 6, y - 44); g.lineTo(x - 24, y - 22 + br); g.stroke();
+    g.strokeStyle = '#5a4026'; g.lineWidth = 6; g.beginPath(); g.moveTo(x - 24, y - 22 + br); g.lineTo(x - 34, y - 52 + br); g.stroke();
+    g.fillStyle = '#e8d070'; g.fillRect(x - 11, y - 67 + br, 3, 2); g.fillRect(x - 4, y - 67 + br, 3, 2);
+  } else if (type === 'worm') {
+    for (let i = 0; i < 9; i++) { const a = i / 8 * Math.PI, sx = x + 10 + Math.cos(a) * 40, sy = y - Math.sin(a) * (46 + br * 2);
+      g.fillStyle = i % 2 ? '#a8836a' : '#94705a'; g.beginPath(); g.arc(sx, sy, 11 - i * 0.4, 0, 7); g.fill(); }
+    g.fillStyle = '#2a1a14'; g.beginPath(); g.arc(x + 50, y - 4, 6, 0, 7); g.fill();
+    g.fillStyle = '#4a3a30'; g.beginPath(); g.ellipse(x + 10, y + 2, 52, 5, 0, 0, 7); g.fill();
+  } else if (type === 'treant') {
+    g.fillStyle = '#4a3a2a'; g.fillRect(x, y - 70, 22, 70);
+    g.strokeStyle = '#4a3a2a'; g.lineWidth = 6; g.beginPath(); g.moveTo(x + 2, y - 50); g.quadraticCurveTo(x - 20, y - 60 + br * 2, x - 26, y - 34); g.moveTo(x + 20, y - 54); g.quadraticCurveTo(x + 44, y - 66 - br * 2, x + 46, y - 40); g.stroke();
+    g.fillStyle = 'rgba(110,70,120,.75)'; g.beginPath(); g.arc(x + 11, y - 78, 26, 0, 7); g.fill();
+    g.fillStyle = 'rgba(150,90,160,.5)'; g.beginPath(); g.arc(x - 6, y - 70, 14, 0, 7); g.arc(x + 30, y - 72, 14, 0, 7); g.fill();
+    g.fillStyle = `rgba(200,255,140,${.6 + .4 * Math.sin(now / 250)})`; g.fillRect(x + 5, y - 58, 3, 3); g.fillRect(x + 14, y - 58, 3, 3);
+  } else if (type === 'serpent') {
+    for (let i = 0; i < 4; i++) { const cx = x + i * 26, top = 112 - (i === 0 ? 40 : 10) + Math.sin(now / 300 + i) * 3;
+      g.strokeStyle = i % 2 ? '#3f7a6a' : '#356a5c'; g.lineWidth = 12; g.beginPath(); g.arc(cx, 128, 128 - top, Math.PI, 0); g.stroke(); }
+    g.fillStyle = '#3f7a6a'; g.beginPath(); g.ellipse(x - 14, 80 + br * 2, 14, 9, -0.3, 0, 7); g.fill();
+    g.fillStyle = '#f4e27a'; g.fillRect(x - 20, 77 + br * 2, 3, 2);
   } else if (type === 'goose') {
     for (let i = 0; i < 4; i++) { const ox = x + i * 24, oy = y - 30 - Math.sin(now / 250 + i) * 6; g.fillStyle = 'rgba(200,210,235,.6)'; g.beginPath(); g.ellipse(ox, oy, 9, 6, 0, 0, 7); g.fill(); g.beginPath(); g.moveTo(ox - 6, oy - 2); g.quadraticCurveTo(ox - 12, oy - 14, ox - 16, oy - 12); g.lineWidth = 3; g.strokeStyle = 'rgba(200,210,235,.6)'; g.stroke(); }
   }

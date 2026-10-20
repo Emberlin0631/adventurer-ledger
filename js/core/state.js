@@ -1,6 +1,6 @@
 /* 遊戲狀態、成員工具、存讀檔 */
 const SAVE_KEY = 'adventurer-ledger-save';
-const SAVE_VERSION = 3;
+const SAVE_VERSION = 4;
 const SEASON_DAYS = 30, YEAR_DAYS = 120;
 const S = {};
 

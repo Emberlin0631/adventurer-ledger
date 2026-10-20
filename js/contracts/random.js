@@ -6,6 +6,12 @@ const rcTags = c => RC[c.id].tags.concat(c.hidden ? [c.hidden] : []);
 
 function fillBoard() {
   if (S.progress < 1) return;
+  // 商會長約（主線六的結果）：每季一張，保證接得到
+  if (S.flags.charter && S.flags.charterSeason !== S.seasonIdx && !S.board.some(c => c.id === 'charter')) {
+    S.flags.charterSeason = S.seasonIdx;
+    const b = charterBounty();
+    S.board.unshift({uid: S.uidSeq++, id: 'charter', place: 9, bounty: b, stated: 4, trueN: 4, hidden: null, days: 2, D: 1, competitor: b, gearReward: false});
+  }
   let guard = 0;
   while (S.board.length < RC_BOARD_SIZE && guard++ < 30) {
     const c = genContract();
@@ -50,6 +56,7 @@ function rcIntel(c) {
   const bids = {low: Math.round(c.bounty * 0.85 / 10) * 10, std: c.bounty, high: Math.round(c.bounty * 1.3 / 10) * 10};
   const accept = kind => () => {
     let p = {low: 1, std: 0.85, high: justified ? 0.85 : 0.3}[kind];
+    if (c.id === 'charter' && kind !== 'high') p = 1;   // 長約：照約定價格一定成交
     if (M.clause && !justified) p -= 0.3;
     if (M.wantAdv && S.rep < 60) p -= 0.15;
     if (kind !== 'low') p += (S.rep - 50) / 200;   // 聲望好，委託人比較好說話
