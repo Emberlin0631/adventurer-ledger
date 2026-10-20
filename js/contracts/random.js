@@ -15,8 +15,8 @@ function fillBoard() {
 function rcNotice(c) {
   return notice({
     small: true, title: t(`rc.${c.id}.title`, {place: placeName(c.place)}),
-    meta: [t('rc.client', {who: t(`rc.${c.id}.who`)}), t('rc.days', {n: c.days}), t('rc.danger', {n: c.D})],
-    bounty: silver(c.bounty), body: t(`rc.${c.id}.body`), btn: B(t('btn.view'), () => rcIntel(c)),
+    meta: [t('rc.client', {who: t(`rc.${c.id}.who`)}), t('rc.days', {n: c.days}), t('rc.danger', {n: c.D})].concat(RC[c.id].req ? [t('rc.reqShort', {req: reqText(RC[c.id].req)})] : []),
+    bounty: silver(c.bounty) + (c.gearReward ? `<small class="gearrw">${t('rc.gearReward')}</small>` : ''), body: t(`rc.${c.id}.body`), btn: B(t('btn.view'), () => rcIntel(c)),
   });
 }
 function removeFromBoard(c) { S.board = S.board.filter(x => x.uid !== c.uid); }
@@ -33,7 +33,11 @@ function rcIntel(c) {
         const M = S.M;
         M.rationDays = Math.max(1, c.days + (T.tags.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') ? 1 : 0));
         const known = T.tags.concat(M.scouted && c.hidden ? [c.hidden] : []);
-        return known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
+        const h = known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
+        if (T.req) h.push([reqMet(T.req), t('rc.reqHint', {req: reqText(T.req)}), true]);
+        const est = rcEstimate(c);
+        h.push([est >= 0.7, t('rc.est', {n: Math.round(est * 100)}), true]);
+        return h;
       },
       go: rcGo, back: null, cancel: true,
     });
@@ -67,9 +71,12 @@ function rcIntel(c) {
      <li>${t('rc.threats', {list: T.tags.map(tagName).join(t('list.sep'))})}</li>
      <li>${t('rc.danger', {n: c.D})}</li>
      <li>${t('rc.compet', {n: fmt(c.competitor)})}</li>
+     ${T.req ? `<li class="${reqMet(T.req) ? 'ok' : 'warn'}">${t(reqMet(T.req) ? 'rc.reqYes' : 'rc.reqNo', {req: reqText(T.req)})}</li>` : ''}
+     ${c.gearReward ? `<li class="new">${t('rc.gearRewardB')}</li>` : ''}
+     <li>${t('rc.estIntel', {n: Math.round(rcEstimate(c) * 100)})}</li>
      ${M.scouted ? (disc ? `${c.trueN > c.stated ? `<li class="new">${t('rc.scoutTrue', {target: target(c.trueN)})}</li>` : ''}${c.hidden ? `<li class="new">${t('rc.scoutHidden', {tag: tagName(c.hidden)})}</li>` : ''}` : `<li class="new">${t('rc.scoutClean')}</li>`) : ''}
    </ul>
-   ${M.scouted ? '' : B(t('btn.scout'), () => { if (S.chest < scoutCost) return toast(t('toast.noMoney')); spend(scoutCost); M.scouted = true; rcIntel(c); }, {sub: t('rc.scoutSub', {n: scoutCost})})}</div>
+   ${M.scouted ? '' : B(t('btn.scout'), () => { if (S.chest < scoutCost) return toast(t('toast.noMoney')); spend(scoutCost); M.scouted = true; creditRole(['scout']); rcIntel(c); }, {sub: scoutCost ? t('rc.scoutSub', {n: scoutCost}) : t('rc.scoutFree', {name: nm(participants().find(m => m.key === 'scout'))})})}</div>
    <div class="panel"><h4>${t('rc.bid')}</h4><div class="choices">
      ${B(`${M.clause ? '■' : '□'} ${t('rc.clause')}`, () => { M.clause = !M.clause; rcIntel(c); }, {sub: t('rc.clauseSub')})}
      ${B(`${M.wantAdv ? '■' : '□'} ${t('rc.adv')}`, () => { M.wantAdv = !M.wantAdv; rcIntel(c); }, {sub: t(S.rep >= 60 ? 'rc.advSubOk' : 'rc.advSub')})}
@@ -148,17 +155,21 @@ function rcFight(X, bonus) {
   rcTags(c).filter(tag => tag !== 'loot').forEach(tag => {
     const r = tagResolve(tag, c.D);
     r.used.forEach(([k, n]) => { used[k] = (used[k] || 0) + n; });
-    if (r.ok) L.push(['g', t('rc.f.ok', {tag: tagName(tag)})]);
+    if (r.ok) { L.push(['g', t('rc.f.ok', {tag: tagName(tag)})]); if (TAG_CREDIT[tag]) creditRole(TAG_CREDIT[tag]); }
     else {
       unc++; L.push(['w', t('rc.f.bad', {tag: tagName(tag)})]);
       const lvl = rnd() < 0.15 * c.D ? 2 : rnd() < 0.6 ? 1 : 0;
       if (lvl) { const m = injure(lvl); if (m) L.push(['b', t(lvl === 2 ? 'rc.f.hurt2' : 'rc.f.hurt', {name: nm(m)})]); }
     }
   });
+  const req = RC[c.id].req;
+  if (req) {
+    if (reqMet(req)) { L.push(['g', t('rc.f.reqOk', {req: reqText(req)})]); creditRole(req.role ? [req.role] : FRONT); }
+    else { unc++; L.push(['w', t('rc.f.reqBad', {req: reqText(req)})]); const m = injure(rnd() < 0.1 * c.D ? 2 : 1); if (m) L.push(['b', t('rc.f.hurt', {name: nm(m)})]); }
+  }
   if (rnd() < 0.08 * c.D) { const m = injure(1); if (m) L.push(['w', t('rc.f.hurt', {name: nm(m)})]); }
   const ratio = Math.max(0, (c.trueN - c.stated) / c.stated);
-  const healer = has('heal') || has('appr');
-  const p = Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + growthBonus() + bonus));
+  const p = rcSuccessP(c, unc, ratio, bonus);
   const usedTxt = Object.entries(used).map(([k, n]) => `${t('inv.' + k)}×${n}`).join(t('list.sep'));
   if (usedTxt) L.push(t('rc.f.used', {list: usedTxt}));
   const loot = M.extraLoot.slice(), ded = [];
@@ -170,8 +181,10 @@ function rcFight(X, bonus) {
       else if (M.svc.porters) loot.push([t('rc.lootPort'), Math.round(base * 0.35 / 10) * 10]);
       else L.push(['w', t('rc.lootNone')]);
     }
+    if (c.gearReward) L.push(['g', t('rc.f.gearReward')]);
     card(t('fight.over'), res(L), [{label: t('btn.verify'), cls: 'pri', fn: () => {
       rcFinish();
+      if (c.gearReward) S.pending.push('gearReward');
       settle({title: t('rc.s.title', {name: missionName(M)}), bounty: M.bounty, loot, ded, noteKey: 'rc.note'});
     }}]);
   } else {
@@ -183,3 +196,18 @@ function rcFight(X, bonus) {
   }
 }
 function rcFinish() { S.day += 1; }
+
+/* 成功率公式：戰鬥與預估共用 */
+function rcSuccessP(c, unc, ratio, bonus) {
+  const healer = has('heal') || has('appr');
+  return Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + growthBonus() + bonus));
+}
+/* 預估：只看已知情報（鑑定過才算進隱藏威脅與實際數量） */
+function rcEstimate(c) {
+  const M = S.M, T = RC[c.id], scouted = M && M.scouted;
+  const known = T.tags.concat(scouted && c.hidden ? [c.hidden] : []).filter(tag => tag !== 'loot');
+  let unc = known.filter(tag => !(M ? tagReady(tag, c.D) : false)).length;
+  if (T.req && !reqMet(T.req)) unc++;
+  const ratio = scouted ? Math.max(0, (c.trueN - c.stated) / c.stated) : 0;
+  return rcSuccessP(c, unc, ratio, 0);
+}

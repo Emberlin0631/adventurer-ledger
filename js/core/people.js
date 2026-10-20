@@ -44,7 +44,10 @@ const veteranBonus = () => participants().filter(m => traitOf(m) === 'veteran').
 
 /* ---------- 訴求 ---------- */
 function maybeQueueRequest() {
-  if (S.pending.length || rnd() > 0.3) return;
+  if (S.pending.length) return;
+  const senior = S.members.find(m => m.wantRaise && !m.dead);
+  if (senior) { S.req = {nk: senior.nk, type: 'raise', lv: senior.wantRaise}; senior.wantRaise = 0; S.pending.push('request'); return; }
+  if (rnd() > 0.3) return;
   const pool = S.members.filter(m => m.key !== 'cap' && !m.dead);
   if (!pool.length) return;
   const m = pick(pool), opts = [];
@@ -60,7 +63,8 @@ registerEvent('request', () => {
   const r = S.req, m = r && S.members.find(x => x.nk === r.nk);
   if (!m) { S.req = null; goHall(); return; }
   const name = nm(m), done = () => { S.req = null; goHall(); };
-  const head = () => `<h2>${t('rq.' + r.type + '.t', {name})}</h2><p class="lede">${t('rq.' + r.type + '.b', {name, role: roleOf(m), trait: traitOf(m) ? t('tr.' + traitOf(m)) : ''})}</p>`;
+  const bodyKey = r.type === 'raise' && r.lv ? 'rq.raise.blv' : 'rq.' + r.type + '.b';
+  const head = () => `<h2>${t('rq.' + r.type + '.t', {name})}</h2><p class="lede">${t(bodyKey, {name, lv: r.lv, role: roleOf(m), trait: traitOf(m) ? t('tr.' + traitOf(m)) : ''})}</p>`;
   // 按鈕要在 screen() 裡面建立，否則會被清掉
   const build = () => { let choices = '';
   if (r.type === 'raise') {
@@ -131,7 +135,7 @@ function peoplePanel() {
     return B(armed ? t('fire.confirm', {name: nm(m)}) : t('fire.btn', {name: nm(m)}), () => {
       if (!armed) { dismissArmed = m.nk; rerender(); return; }
       if (S.chest < sev) return toast(t('toast.noMoney'));
-      S.chest -= sev; S.members = S.members.filter(x => x !== m);
+      S.chest -= sev; const v = recoverPartyGear(m); if (v) toast(t('pc.recover', {n: fmt(v)})); S.members = S.members.filter(x => x !== m);
       S.members.forEach(x => { if (x.key !== 'cap') addLoyT(x, -2); });
       dismissArmed = null; goHall();
     }, {cls: 'ghost' + (armed ? ' danger' : ''), sub: t('fire.sub', {n: sev})});

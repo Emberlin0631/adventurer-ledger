@@ -8,11 +8,11 @@ const RC = {
   geese:    {monster: 'goose',     biome: 'grave',  base: 220,  days: 3, danger: 1, count: [5, 8], tags: ['fire'],                 hidden: ['curse']},
   escort:   {monster: 'bandit',    biome: 'road',   base: 200,  days: 2, danger: 1, count: [3, 5], tags: ['armor'],                hidden: ['ambush']},
   toads:    {monster: 'toad',      biome: 'swamp',  base: 300,  days: 4, danger: 1, count: [4, 6], tags: ['poison', 'flood'],      hidden: ['far']},
-  crypt:    {monster: 'ghoul',     biome: 'cellar', base: 420,  days: 4, danger: 2, count: [3, 5], tags: ['rot', 'under'],         hidden: ['curse']},
-  bandits:  {monster: 'bandit',    biome: 'road',   base: 380,  days: 4, danger: 2, count: [5, 8], tags: ['ambush', 'armor'],      hidden: ['far']},
-  harpies:  {monster: 'goose',     biome: 'road',   base: 520,  days: 5, danger: 2, count: [4, 6], tags: ['fire', 'far'],          hidden: ['curse']},
-  mine:     {monster: 'lizard',    biome: 'mine',   base: 650,  days: 3, danger: 3, count: [1, 2], tags: ['petrify', 'under'],     hidden: ['armor']},
-  wyvern:   {monster: 'manticore', biome: 'road',   base: 1100, days: 6, danger: 4, count: [1, 1], tags: ['poison', 'fire', 'loot'], hidden: ['armor'], minYear: 1},
+  crypt:    {monster: 'ghoul',     biome: 'cellar', base: 420,  days: 4, danger: 2, count: [3, 5], tags: ['rot', 'under'],         hidden: ['curse'], req: {role: 'heal', lv: 2}},
+  bandits:  {monster: 'bandit',    biome: 'road',   base: 380,  days: 4, danger: 2, count: [5, 8], tags: ['ambush', 'armor'],      hidden: ['far'], req: {role: 'scout', lv: 3}},
+  harpies:  {monster: 'goose',     biome: 'road',   base: 520,  days: 5, danger: 2, count: [4, 6], tags: ['fire', 'far'],          hidden: ['curse'], req: {role: 'mage', lv: 3}},
+  mine:     {monster: 'lizard',    biome: 'mine',   base: 650,  days: 3, danger: 3, count: [1, 2], tags: ['petrify', 'under'],     hidden: ['armor'], req: {front: 2}},
+  wyvern:   {monster: 'manticore', biome: 'road',   base: 1100, days: 6, danger: 4, count: [1, 1], tags: ['poison', 'fire', 'loot'], hidden: ['armor'], minYear: 1, req: {front: 3}},
 };
 const PLACE_COUNT = 12;
 
@@ -68,6 +68,17 @@ function tagResolve(tag, D) {
   return {ok: true, used: []};
 }
 
+/* 能力要求：特定職業等級，或前排（隊長、戰士）有人裝備達到某階 */
+const FRONT = ['cap', 'tank', 'trainee'];
+function reqMet(req) {
+  if (!req) return true;
+  const ps = participants().filter(m => m.hp < 2);
+  if (req.role) return ps.some(m => m.key === req.role && lvOf(m) >= req.lv);
+  if (req.front) return ps.some(m => FRONT.includes(m.key) && tierOf(m) >= req.front);
+  return true;
+}
+const reqText = req => req.role ? t('req.role', {role: t('r.' + req.role), lv: req.lv}) : t('req.front', {tier: req.front});
+const GEAR_REWARD_TPL = ['escort', 'bandits', 'mine', 'crypt'];
 function genContract() {
   const year = S.year;
   const ids = Object.keys(RC).filter(id => (RC[id].minYear || 0) < year || RC[id].danger <= 3);
@@ -79,6 +90,7 @@ function genContract() {
   const stated = T.count[0] + Math.floor(rnd() * (T.count[1] - T.count[0] + 1));
   const trueN = Math.max(stated, Math.round(stated * pick([1, 1, 1, 1.5, 2])));
   const hidden = T.hidden.length && rnd() < 0.45 ? pick(T.hidden) : null;
-  return {uid: S.uidSeq++, id, place: Math.floor(rnd() * PLACE_COUNT), bounty, stated, trueN,
+  const gearReward = GEAR_REWARD_TPL.includes(id) && rnd() < 0.25;   // 用一次裝備升級抵部分賞金
+  return {uid: S.uidSeq++, id, place: Math.floor(rnd() * PLACE_COUNT), bounty: gearReward ? r10(bounty * 0.75) : bounty, stated, trueN, gearReward,
     hidden: hidden && !T.tags.includes(hidden) ? hidden : null, days: T.days, D, competitor: r10(bounty * 0.8)};
 }

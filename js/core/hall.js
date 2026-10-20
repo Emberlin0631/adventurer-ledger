@@ -12,8 +12,8 @@ function goHall() {
   const leaver = S.members.find(m => m.key !== 'cap' && m.loy < 25);
   if (leaver) {
     S.members = S.members.filter(m => m !== leaver);
-    const name = nm(leaver);
-    screen(() => `<h2>${t('hall.leave.title', {name})}</h2><p class="lede">${t('hall.leave.body', {name})}</p><div class="row">${B(t('btn.backHall'), goHall, {cls: 'pri'})}</div>`);
+    const name = nm(leaver), v = recoverPartyGear(leaver);
+    screen(() => `<h2>${t('hall.leave.title', {name})}</h2><p class="lede">${t('hall.leave.body', {name})}${v ? ' ' + t('pc.recover', {n: fmt(v)}) : ''}</p><div class="row">${B(t('btn.backHall'), goHall, {cls: 'pri'})}</div>`);
     return;
   }
   if (S.pending.length) { const id = S.pending.shift(); (EVENTS[id] || goHall)(); return; }
@@ -23,7 +23,7 @@ function goHall() {
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
   if (!S.mkt) rollMarket();
   if (S.seasonIdx < sIdx) { rollMarket(); S.cands = null; }
-  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); }
+  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); maybePoach(); }
   fillBoard();
   saveGame();
   // 破產：錢箱連最便宜的一趟口糧都付不起

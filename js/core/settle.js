@@ -84,6 +84,7 @@ function settle(o) {
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; if (m.restNext) m.restNext = false; else m.hp = 1; } });
     if (deaths.dead.length) {
       deaths.dead.forEach(m => S.fallen.push({nk: m.nk, key: m.key, y: S.year, day: S.day, earned: Math.round(m.earned)}));
+      deaths.dead.forEach(m => recoverPartyGear(m));   // 私人裝備歸繼承人，小隊出資的收回變賣
       S.members = S.members.filter(m => !m.dead);
       if (deaths.dead.some(m => m.key === 'cap')) { S.records.push({y: S.year, place: M.place, nameKey: M.nameKey, resultKey: o.resultKey || 'res.ok', bounty: o.bounty || 0, spent: M.spent, dist, chest: S.chest}); S.M = null; captainDied(); return; }
       S.deadPending = deaths.dead.map(m => ({nk: m.nk, key: m.key, share: m.share}));
