@@ -30,15 +30,16 @@ function removeFromBoard(c) { S.board = S.board.filter(x => x.uid !== c.uid); }
 function rcIntel(c) {
   const T = RC[c.id];
   if (!S.M || S.M.uid !== c.uid) {
-    const market = ['repair', 'healmat'];
-    T.tags.concat(c.hidden ? [c.hidden] : []).forEach(tag => TAGS[tag].items.forEach(i => { if (!market.includes(i)) market.push(i); }));
+    const market = ['repair', 'healmat'];   // 商品只依「已知」的威脅上架，隱藏威脅鑑定後才會出現
+    T.tags.forEach(tag => TAGS[tag].items.forEach(i => { if (!market.includes(i)) market.push(i); }));
     newMission({
       id: 'rc', D: c.D, uid: c.uid, rc: c, nameKey: `rc.${c.id}.title`, place: c.place, bounty: c.bounty, rationDays: c.days,
       rationRate: 5 + Math.max(0, S.members.length - 5), market, clause: false,
       hints: () => {
         const M = S.M;
-        M.rationDays = Math.max(1, c.days + (T.tags.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') ? 1 : 0));
         const known = T.tags.concat(M.scouted && c.hidden ? [c.hidden] : []);
+        if (M.scouted && c.hidden) known.forEach(tag => TAGS[tag].items.forEach(i => { if (!M.market.includes(i)) M.market.push(i); }));
+        M.rationDays = Math.max(1, c.days + (known.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') ? 1 : 0));
         const h = known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
         if (T.req) h.push([reqMet(T.req), t('rc.reqHint', {req: reqText(T.req)}), true]);
         const est = rcEstimate(c);
