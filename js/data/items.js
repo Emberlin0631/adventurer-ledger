@@ -26,4 +26,5 @@ const MEMBER_TEMPLATES = {
   trainee: {nk: 'm.yue',    share: 0.5,  color: '#9fb4c8', loy: 75},
   tracker: {nk: 'm.grey',   share: 1,    color: '#a98a64', loy: 70},
 };
-const STARTING_ROSTER = ['cap', 'scout', 'tank', 'mage', 'heal'];
+const STARTING_ROSTER = ['cap'];   // 一開始只有隊長，到酒館招募到 3 人才開張
+const FORM_MIN = 3, MAINLINE_MIN = 5;   // 開張人數、主線委託需要的人數

@@ -39,8 +39,9 @@ const mlScout = () => has('scout') || has('tracker');
 function mainlinePanel() {
   if (S.progress >= ML_TOTAL) return `<p class="muted">${t('ml.done')}</p>`;
   const next = Object.values(CONTRACTS).find(c => c.progress === S.progress);
+  if (S.members.length < MAINLINE_MIN) return `<p class="muted">${t('ml.progress', {n: S.progress, total: ML_TOTAL})}・${t('ml.need', {n: MAINLINE_MIN})}</p>`;
   if (!next || S.day >= next.minDay) return `<p class="muted">${t('ml.progress', {n: S.progress, total: ML_TOTAL})}</p>`;
   const d = next.minDay - 1, y = Math.floor(d / YEAR_DAYS) + 1;
   return `<p class="muted">${t('ml.progress', {n: S.progress, total: ML_TOTAL})}・${t('ml.next', {y, s: t('season.' + (Math.floor(d / SEASON_DAYS) % 4)), d: next.minDay - S.day})}</p>`;
 }
-const mainlineAvailable = () => Object.values(CONTRACTS).filter(c => c.progress === S.progress && S.day >= (c.minDay || 1));
+const mainlineAvailable = () => S.members.length < MAINLINE_MIN ? [] : Object.values(CONTRACTS).filter(c => c.progress === S.progress && S.day >= (c.minDay || 1));

@@ -16,6 +16,7 @@ function goHall() {
     screen(() => `<h2>${t('hall.leave.title', {name})}</h2><p class="lede">${t('hall.leave.body', {name})}${v ? ' ' + t('pc.recover', {n: fmt(v)}) : ''}</p><div class="row">${B(t('btn.backHall'), goHall, {cls: 'pri'})}</div>`);
     return;
   }
+  if (!S.formed) { formScreen(); return; }
   if (S.pending.length) { const id = S.pending.shift(); (EVENTS[id] || goHall)(); return; }
   // 年底：先結這一年的帳，再進下一年
   if (Math.floor((S.day - 1) / YEAR_DAYS) + 1 > S.year) { yearEnd(S.year); return; }

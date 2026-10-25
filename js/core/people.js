@@ -105,7 +105,7 @@ function makeCandidate(role, source) {
 function rollCandidates() {
   const coreMissing = CORE_ROLES.filter(r => !S.members.some(m => m.key === r || (r === 'heal' && m.key === 'appr')));
   const list = coreMissing.map(r => makeCandidate(r, 'guild'));
-  while (list.length < 3) {
+  while (list.length < (S.formed ? 3 : 6)) {
     const src = pick(['guild', 'tavern', 'tavern', 'veteran']);
     const roles = src === 'veteran' ? ['scout', 'tank', 'mage'] : RECRUIT_ROLES;
     list.push(makeCandidate(pick(roles), src));
@@ -122,9 +122,21 @@ function hireCandidate(c) {
   if (c.hidden) toast(t('hire.reveal', {name: nm(m), trait: t('tr.' + c.trait)}));
   goHall();
 }
+/* ---------- 開局：只有隊長一人，先到酒館湊滿 3 個人 ---------- */
+function formScreen() {
+  saveGame();
+  if (!S.cands) rollCandidates();
+  const n = S.members.length, ready = n >= FORM_MIN, full = n >= PARTY_MAX;
+  screen(() => `${coach('form')}<div><h2>${t('form.title')}</h2><p class="lede">${t('form.lede', {n: FORM_MIN})}</p></div>
+    <p class="num"><b>${t('form.count', {n, min: FORM_MIN})}</b>・${t('form.chest', {n: fmt(S.chest)})}</p>
+    <div class="split">${S.cands.map(c => `<div class="panel"><h4>${t(c.nk)}・${t('r.' + c.role)}</h4>
+      <p class="muted">${t('form.role.' + c.role)}</p>
+      <p class="muted">${[t('src.' + c.source), t('hire.share', {s: c.share}), c.hidden ? t('hire.unknown') : t('tr.' + c.trait), c.fee ? silver(c.fee) : t('hire.free')].join('・')}</p>
+      ${B(t('form.hire'), () => hireCandidate(c), {dis: full, cls: 'pri'})}</div>`).join('')}</div>
+    <div class="row">${B(ready ? t('form.start') : t('form.need', {n: FORM_MIN - n}), () => { S.formed = true; S.cands = null; goHall(); }, {cls: 'pri', dis: !ready})}</div>`);
+}
 let dismissArmed = null;
 function peoplePanel() {
-  if (S.progress < 1 && S.members.length >= 5) return '';
   if (!S.cands) rollCandidates();
   const full = S.members.length >= PARTY_MAX;
   const cands = S.cands.map(c => B(t('hire.btn', {name: t(c.nk), role: t('r.' + c.role)}), () => hireCandidate(c), {

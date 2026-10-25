@@ -5,7 +5,7 @@ const tagName = k => t('tag.' + k + '.n');
 const rcTags = c => RC[c.id].tags.concat(c.hidden ? [c.hidden] : []);
 
 function fillBoard() {
-  if (S.progress < 1) return;
+  if (!S.formed) return;
   // 商會長約（主線六的結果）：每季一張，保證接得到
   if (S.flags.charter && S.flags.charterSeason !== S.seasonIdx && !S.board.some(c => c.id === 'charter')) {
     S.flags.charterSeason = S.seasonIdx;
