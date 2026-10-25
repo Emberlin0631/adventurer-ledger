@@ -58,7 +58,7 @@ function settle(o) {
         ${ps.map(m => { const amt = dist * m.share / tot, d = Math.min(m.debt || 0, amt);
           return `<span>${nm(m)}${m.dead ? ` <span class="muted">${t('dth.heir')}</span>` : ''}</span><span>${roleOf(m)}</span><span>${m.share}</span><span>${fmt(amt)}${d ? ` <span class="muted">${t('st.debt', {n: fmt(d)})}</span>` : ''}</span>`; }).join('')}</div>`
       : `${pool < 0 ? `<div class="ln neg" ${st()}><span>${t('st.repay')}</span><span>−${fmt(-pool)}</span></div>` : ''}<div class="ln note" ${st()}><span>${loss > 0 ? t('st.loss', {n: fmt(loss)}) : t('st.even')}</span><span></span></div>`;
-    $('#main').innerHTML = `<div><h2>${title}</h2>${intro ? `<p class="lede">${intro}</p>` : ''}</div>
+    $('#main').innerHTML = `${coach('settle')}<div><h2>${title}</h2>${intro ? `<p class="lede">${intro}</p>` : ''}</div>
       ${deaths.out.length ? `<div class="card" style="border-left-color:${deaths.dead.length ? 'var(--wax)' : 'var(--good)'}"><h4>${t(deaths.dead.length ? 'dth.title' : 'dth.titleSaved')}</h4>${res(deaths.out)}</div>` : ''}
       <div class="ledgerwrap"><div class="ledger"><h3>${t('st.ledger')}</h3>${lh}${tail}${note ? `<div class="ln note" ${st()}><span>${note}</span><span></span></div>` : ''}</div>
       ${o.lesson ? `<aside class="lesson"><h4>${t('lesson.title', {c: t('lesson.' + o.lesson + '.name')})}</h4><p>${t('lesson.' + o.lesson + '.body', o.lessonP || {})}</p></aside>` : ''}</div>

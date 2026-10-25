@@ -77,6 +77,18 @@ window.LANG_EN = {
   /* Contract 2 */
 
   /* Mid-season events */
+  'coach.on':'Turn tips on',
+  'coach.off':'Turn tips off',
+  'coach.hall.t':'Tip: start at the notice board',
+  'coach.hall.b':'This is your counting-room. Each notice on the board is a small business: open "intel" to read the details before committing. The chest is the only money you can spend, and an empty chest means bankruptcy. You can turn tips off at the bottom of the page.',
+  'coach.intel.t':'Tip: look before you quote',
+  'coach.intel.b':'What the client tells you may be incomplete. Pay to scout and you may uncover a hidden threat. There are three quotes: the low one is easy to accept, the high one needs justification. An advance eases cash flow; a clause protects you if the job fails.',
+  'coach.market.t':'Tip: purchases come out of the chest first',
+  'coach.market.b':'Check the "before you leave" list on the right and fill what is missing. The chest fronts the cost and it is reimbursed first at settlement; anything you do not buy will not be there in the field.',
+  'coach.settle.t':'Tip: this is the settlement',
+  'coach.settle.b':'The bounty pays the guild fee first, then reimburses what you fronted; only the surplus is split. The slider sets how much stays in the chest as a reserve, and the rest goes to members by share. Every season has fixed costs, so a thin reserve may not last to the next one.',
+  'coach.members.t':'Tip: members are more than muscle',
+  'coach.members.b':'Each person has their own purse, share and loyalty. Payouts go into personal purses, which they spend on gear and living costs. Pay them too little or let them get badly hurt, and they will make demands or leave.',
   'ev.heal.title':'The temple infirmary is hiring',
   'ev.heal.lede':'The northern temple is expanding its infirmary, offering a fixed monthly stipend, room, board and supplies. Martin has received an invitation. With the party, his income depends on jobs succeeding and he has to walk into dangerous places; at the temple, he gets paid every month.',
   'ev.heal.quote':'Friendship matters, but it doesn\'t pay rent. He has a steadier "other path" than you do; you\'ll need a real reason for him to stay.',

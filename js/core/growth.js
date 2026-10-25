@@ -84,7 +84,7 @@ const gearName = (m, tier = tierOf(m)) => tier ? t(`gear.${m.key}.${tier}`) : t(
 
 /* 成員詳情頁 */
 function membersScreen() {
-  screen(() => `<div class="row" style="justify-content:space-between"><h2>${t('ms.title')}</h2>${B(t('btn.backHall'), goHall)}</div>
+  screen(() => `${coach('members')}<div class="row" style="justify-content:space-between"><h2>${t('ms.title')}</h2>${B(t('btn.backHall'), goHall)}</div>
     <p class="lede">${t('ms.lede')}</p>
     <div class="growth">${S.members.map(m => {
       migrateMember(m);

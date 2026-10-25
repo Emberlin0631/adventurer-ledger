@@ -38,7 +38,7 @@ function market() {
   screen(() => {
     const hints = M.hints();
     const fees = departFees(), ft = fees.reduce((a, f) => a + f[1], 0);
-    return `
+    return `${coach('market')}
     <div><h2>${t('mk.title')}</h2><p class="lede">${t('mk.lede', {name: missionName(M)})}</p></div>
     <div class="split">
       <div class="shop">${M.market.map(row).join('')}</div>

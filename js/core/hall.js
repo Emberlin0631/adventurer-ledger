@@ -36,6 +36,7 @@ function goHall() {
     const notices = mainlineAvailable().map(c => c.notice()).concat(S.board.map(rcNotice));
     const sick = S.members.filter(m => m.hp === 2);
     return `
+    ${coach('hall')}
     ${showIntro ? `<div class="panel"><h4>${t('hall.intro.title')}</h4><p>${t('hall.intro.body')}</p></div>` : ''}
     ${dues ? `<div class="panel"><h4>${t('dues.title')}</h4><p>${t('dues.body', {n: fmt(dues), m: S.members.length})}</p></div>` : ''}
     <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><div class="row"><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span>${B(t('ms.open'), membersScreen, {cls: 'ghost'})}</div></div>
@@ -48,7 +49,7 @@ function goHall() {
     ${marketPanel()}
     ${herbPanel()}
     ${peoplePanel()}
-    <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
+    <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(S.noTips ? t('coach.on') : t('coach.off'), () => { S.noTips = !S.noTips; rerender(); }, {cls: 'ghost'})}${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }
       clearSave(); startScreen();
     }, {cls: 'ghost' + (newGameArmed ? ' danger' : '')})}</div>`;

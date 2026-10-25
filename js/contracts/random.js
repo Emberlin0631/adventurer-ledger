@@ -72,7 +72,7 @@ function rcIntel(c) {
     M.priced = kind === 'high' && justified;
     market();
   };
-  screen(() => `<div><h2>${t(`rc.${c.id}.title`, {place: placeName(c.place)})}</h2><p class="lede">${t(`rc.${c.id}.body`)}</p></div>
+  screen(() => `${coach('intel')}<div><h2>${t(`rc.${c.id}.title`, {place: placeName(c.place)})}</h2><p class="lede">${t(`rc.${c.id}.body`)}</p></div>
    <div class="split"><div class="panel"><h4>${t('intel.known')}</h4><ul class="intel">
      <li>${t('rc.stated', {target: target(c.stated)})}</li>
      <li>${t('rc.threats', {list: T.tags.map(tagName).join(t('list.sep'))})}</li>

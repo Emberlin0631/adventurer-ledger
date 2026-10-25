@@ -6,7 +6,15 @@ const fmt = n => Math.round(n).toLocaleString(LANG === 'en' ? 'en-US' : 'zh-TW')
 const silver = n => t('unit', {n: fmt(n)});
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-let REG = {}, RN = 0, EXP = null, CUR = null;
+let REG = {}, RN = 0, EXP = null, CUR = null, COACH_LAST = null;
+/* 新手提示：每則只在第一次出現的那個畫面顯示；同畫面重繪（換語言、切換按鈕）時保留 */
+function coach(id) {
+  if (S.noTips) return '';
+  S.tips = S.tips || {};
+  if (S.tips[id] && COACH_LAST !== id) return '';
+  S.tips[id] = 1; COACH_LAST = id;
+  return `<aside class="coach"><h4>${t('coach.' + id + '.t')}</h4><p>${t('coach.' + id + '.b')}</p></aside>`;
+}
 function clearReg() { REG = {}; RN = 0; }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-a]');
@@ -20,6 +28,7 @@ function B(label, fn, o = {}) {
 function screen(fn) {
   if (EXP) { EXP.stop = true; EXP = null; }
   CUR = typeof fn === 'function' ? fn : null;
+  COACH_LAST = null;
   clearReg();
   $('#main').innerHTML = CUR ? CUR() : (fn || '');
   renderHUD();
