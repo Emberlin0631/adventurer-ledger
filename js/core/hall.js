@@ -23,7 +23,7 @@ function goHall() {
   const sIdx = Math.floor((S.day - 1) / SEASON_DAYS);
   if (!S.mkt) rollMarket();
   if (S.seasonIdx < sIdx) { rollMarket(); S.cands = null; }
-  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, traitOf(m) === 'loyal' ? 4 : 2)); seasonLiving(); maybePoach(); herbSeason(); queueSeasonEvent(); }
+  while (S.seasonIdx < sIdx) { S.seasonIdx++; const d = seasonDues(); S.chest -= d; S.duesNote += d; S.board = []; S.members.forEach(m => addLoy(m, (traitOf(m) === 'loyal' ? 4 : 2) + (capSkill('lead') && m.key !== 'cap' ? 2 : 0))); seasonLiving(); maybePoach(); herbSeason(); queueSeasonEvent(); }
   fillBoard();
   saveGame();
   // 破產：錢箱連最便宜的一趟口糧都付不起

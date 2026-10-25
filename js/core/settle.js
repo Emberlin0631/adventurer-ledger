@@ -5,7 +5,7 @@ function deathChecks(M) {
   const out = [], dead = [], cfg = DIFFS[S.diff || 'std'];
   [...new Set(M.serious || [])].forEach(m => {
     if (m.key === 'cap' && !cfg.capDies) return;
-    let p = cfg.death + 0.02 * ((M.D || 1) - 1), saved = false;
+    let p = (cfg.death + 0.02 * ((M.D || 1) - 1)) * (capSkill('medic') ? 0.85 : 1), saved = false;
     const master = perk('heal');   // Lv3 治療者：更會處理重傷，沒有材料也能處理
     if (has('heal') && m.key !== 'heal' && S.inv.healmat > 0) { S.inv.healmat--; p *= master ? 0.25 : 0.4; saved = true; }
     else if (master && m.key !== 'heal') { p *= 0.6; saved = true; }

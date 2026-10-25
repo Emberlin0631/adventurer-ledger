@@ -52,10 +52,10 @@ function rcIntel(c) {
   const target = n => t(`rc.${c.id}.target`, {n});
   const disc = c.trueN > c.stated || !!c.hidden;
   const justified = M.scouted && disc;
-  const scoutCost = perk('scout') ? 0 : 10 + 5 * c.D;   // Lv3 偵查手自己去看
+  const scoutCost = perk('scout') || capSkill('eye') ? 0 : 10 + 5 * c.D;   // Lv3 偵查手自己去看
   const bids = {low: Math.round(c.bounty * 0.85 / 10) * 10, std: c.bounty, high: Math.round(c.bounty * 1.3 / 10) * 10};
   const accept = kind => () => {
-    let p = {low: 1, std: 0.85, high: justified ? 0.85 : 0.3}[kind];
+    let p = {low: 1, std: 0.85, high: justified ? 0.85 : capSkill('haggle') ? 0.55 : 0.3}[kind];
     if (c.id === 'charter' && kind !== 'high') p = 1;   // 長約：照約定價格一定成交
     if (M.clause && !justified) p -= 0.3;
     if (M.wantAdv && S.rep < 60) p -= 0.15;

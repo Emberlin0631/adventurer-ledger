@@ -18,7 +18,7 @@ const perk = (key, minLv = 3) => participants().some(m => m.key === key && m.hp 
 /* 對整隊的影響 */
 function growthBonus() {
   const b = participants().reduce((a, m) => a + (lvOf(m) - 1) * 0.01 + tierOf(m) * 0.01, 0);
-  return Math.min(0.12, b);
+  return Math.min(0.12, b) + (capSkill('tactics') ? 0.03 : 0);
 }
 /* 對個人的影響：等級與裝備都讓人比較不容易被打中 */
 const growthInjuryFactor = m => Math.pow(0.9, lvOf(m) - 1) * (1 - 0.15 * tierOf(m));
@@ -55,7 +55,7 @@ function applyGrowth(M, ps, amounts, success) {
     if (m.lv >= 3 && m.key === 'appr') { m.key = 'heal'; m.share = Math.max(m.share, 1.25); entry.grad = 'appr'; }
     // 自行升級私人裝備
     const c = gearCost(m), margin = BUY_MARGIN[traitOf(m)] || 1.15;
-    if (c != null && m.purse >= c * margin) { m.purse -= c; m.tier++; entry.bought = m.tier; addLoy(m, 3); }
+    if (m.key !== 'cap' && c != null && m.purse >= c * margin) { m.purse -= c; m.tier++; entry.bought = m.tier; addLoy(m, 3); }
     entry.purse = m.purse;
     log.push(entry);
   });
@@ -111,7 +111,7 @@ function partyFundGear(m) {
   S.chest -= c; m.tier++; m.ptier = (m.ptier || 0) + 1;
   m.pvalue = (m.pvalue || 0) + c;
   addLoy(m, 4);
-  membersScreen();
+  if (CHAR_OPEN === m) charScreen(m); else membersScreen();
 }
 /* 成員離開時：小隊出資的部分收回變賣，回傳收回金額 */
 function recoverPartyGear(m) {
