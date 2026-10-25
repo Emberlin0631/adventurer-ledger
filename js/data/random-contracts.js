@@ -98,7 +98,7 @@ function genContract() {
   const D = T.danger + Math.floor((year - 1) * 0.6);
   const scale = 1 + 0.3 * (year - 1);
   const r10 = n => Math.round(n / 10) * 10;
-  const bounty = r10(T.base * scale * (0.9 + rnd() * 0.25) * ((S.flags.cartel || -1) > S.seasonIdx ? 1.1 : 1));   // 價格同盟期間報酬 +10%
+  const bounty = r10(T.base * scale * (0.9 + rnd() * 0.25) * ((S.flags.cartel || -1) > S.seasonIdx ? 1.1 : 1) * (hasMs('rep80') ? 1.1 : 1));   // 價格同盟期間報酬 +10%
   const stated = T.count[0] + Math.floor(rnd() * (T.count[1] - T.count[0] + 1));
   const trueN = Math.max(stated, Math.round(stated * pick([1, 1, 1, 1.5, 2])));
   const hidden = T.hidden.length && rnd() < 0.45 ? pick(T.hidden) : null;

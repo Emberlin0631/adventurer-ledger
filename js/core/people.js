@@ -110,6 +110,7 @@ function rollCandidates() {
     const roles = src === 'veteran' ? ['scout', 'tank', 'mage'] : RECRUIT_ROLES;
     list.push(makeCandidate(pick(roles), src));
   }
+  if (hasMs('year3')) list.push(makeCandidate(pick(['scout', 'tank', 'mage']), 'veteran'));   // 撐過三年的名聲
   S.cands = list;
 }
 function hireCandidate(c) {

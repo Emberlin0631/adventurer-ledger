@@ -20,7 +20,7 @@ function newGame(diff = 'std') {
   Object.assign(S, {
     diff, fallen: [], deadPending: [], namesUsed: [],
     day: 1, chest: DIFFS[diff].chest, rep: 50, inv: {antidote: 0, antipetri: 0, mirror: 0, crystal: 0, healmat: 0},
-    bones: 0, progress: 0, flags: {}, records: [], yours: 0, yoursY: 0, M: null, pending: [], started: false, formed: false,
+    bones: 0, progress: 0, flags: {}, records: [], yours: 0, yoursY: 0, M: null, pending: [], started: false, formed: false, base: {}, ms: {},
     year: 1, seasonIdx: 0, board: [], uidSeq: 1, duesNote: 0,
     members: STARTING_ROSTER.map(k => makeMember(k)),
   });
@@ -40,6 +40,7 @@ function loadGame() {
     const d = JSON.parse(raw);
     if (!d || d.v !== SAVE_VERSION || !d.s) return 'old';
     newGame(); Object.assign(S, d.s, {M: null});
+    if (!S.base) S.base = {}; if (!S.ms) S.ms = {};
     if (S.formed == null) S.formed = true;   // 舊存檔：已經開張
     S.members.forEach(m => { m.sitting = false; migrateMember(m); });
     return 'ok';

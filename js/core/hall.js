@@ -4,7 +4,7 @@ const EVENTS = {};      // 排進 S.pending 的事件，以 id 儲存才能存�
 function registerContract(def) { CONTRACTS[def.id] = def; }
 function registerEvent(id, fn) { EVENTS[id] = fn; }
 
-const seasonDues = () => Math.round((40 + 4 * S.members.length) * DIFFS[S.diff || 'std'].dues);
+const seasonDues = () => Math.round((40 + 4 * S.members.length) * DIFFS[S.diff || 'std'].dues * (hasMs('rep60') ? 0.9 : 1)) + baseUpkeep();
 const CORE_ROLES = ['scout', 'tank', 'mage', 'heal'];
 
 let newGameArmed = false;
@@ -17,6 +17,7 @@ function goHall() {
     return;
   }
   if (!S.formed) { formScreen(); return; }
+  checkMilestones();
   if (S.pending.length) { const id = S.pending.shift(); (EVENTS[id] || goHall)(); return; }
   // 年底：先結這一年的帳，再進下一年
   if (Math.floor((S.day - 1) / YEAR_DAYS) + 1 > S.year) { yearEnd(S.year); return; }
@@ -40,17 +41,20 @@ function goHall() {
     ${coach('hall')}
     ${showIntro ? `<div class="panel"><h4>${t('hall.intro.title')}</h4><p>${t('hall.intro.body')}</p></div>` : ''}
     ${dues ? `<div class="panel"><h4>${t('dues.title')}</h4><p>${t('dues.body', {n: fmt(dues), m: S.members.length})}</p></div>` : ''}
+    ${remindersPanel()}
     <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><div class="row"><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span>${B(t('ms.open'), membersScreen, {cls: 'ghost'})}</div></div>
     <div class="board">${notices.join('')}</div>
     <div class="row">${B(t('hall.rest'), restDay, {cls: 'ghost', sub: t('hall.restSub', {n: restCost()}), dis: S.chest < restCost()})}</div>
     <p class="muted">${t('hall.next', {d: SEASON_DAYS - (S.day - 1) % SEASON_DAYS, n: fmt(seasonDues())})}</p>
     ${mainlinePanel()}
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {
-      if (S.chest < 80) return toast(t('hall.sick.toast')); S.chest -= 80; m.hp = 0; goHall();
+      if (S.chest < sickCost()) return toast(t('hall.sick.toast')); S.chest -= sickCost(); m.hp = 0; goHall();
     }, {sub: t('hall.sick.cost')})).join('')}</div></div>` : ''}
     ${marketPanel()}
     ${herbPanel()}
     ${peoplePanel()}
+    ${basePanel()}
+    ${milestonePanel()}
     <div class="hallfoot"><span class="muted">${t('hall.diff', {d: t('diff.' + (S.diff || 'std'))})}・${t('hall.autosave')}</span>${B(S.noTips ? t('coach.on') : t('coach.off'), () => { S.noTips = !S.noTips; rerender(); }, {cls: 'ghost'})}${B(newGameArmed ? t('hall.newGameConfirm') : t('hall.newGame'), () => {
       if (!newGameArmed) { newGameArmed = true; rerender(); return; }
       clearSave(); startScreen();

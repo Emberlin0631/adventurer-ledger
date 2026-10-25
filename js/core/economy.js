@@ -24,10 +24,11 @@ function rollMarket() {
 const inflation = () => 1 + 0.05 * ((S.year || 1) - 1);
 function priceOf(k) {
   const it = ITEMS[k];
-  if (it.svc) return Math.round(it.price * inflation());
+  if (it.svc) return Math.round(it.price * inflation() * (k === 'horses' ? [1, 0.5, 0, 0][baseLv('stable')] : 1));
   return Math.round(it.price * (S.mkt ? S.mkt.price[k] : 1) * inflation());
 }
-const sellPriceOf = k => Math.round(priceOf(k) * SELL_RATE);
+const sellRate = () => SELL_RATE + 0.1 * baseLv('warehouse');
+const sellPriceOf = k => Math.round(priceOf(k) * sellRate());
 const shopStock = k => (S.mkt && S.mkt.stock[k] != null) ? S.mkt.stock[k] : 99;
 function trendMark(k) {
   if (ITEMS[k].svc || !S.mkt) return '';
@@ -49,7 +50,7 @@ function marketPanel() {
       <p class="muted">${t('news.prices')}</p>
       <div class="pricegrid num">${INVKEYS.map(k => `<span>${t('inv.' + k)}${trendMark(k)}</span><span>${silver(priceOf(k))}</span><span class="muted">${t('news.stock', {n: shopStock(k)})}</span>`).join('')}</div></div>
     <div class="panel"><h4>${t('wh.title')}</h4>
-      ${sellable.length || S.bones ? `<p class="muted">${t('wh.body', {p: Math.round(SELL_RATE * 100)})}</p><div class="row">${sellable.map(k => B(t('wh.sell', {item: t('inv.' + k), n: S.inv[k]}), () => {
+      ${sellable.length || S.bones ? `<p class="muted">${t('wh.body', {p: Math.round(sellRate() * 100)})}</p><div class="row">${sellable.map(k => B(t('wh.sell', {item: t('inv.' + k), n: S.inv[k]}), () => {
         S.inv[k]--; S.chest += sellPriceOf(k); if (S.mkt.stock[k] != null) S.mkt.stock[k]++; goHall();
       }, {sub: t('wh.each', {n: fmt(sellPriceOf(k))})})).join('')}
       ${S.bones ? B(t('wh.bones', {n: fmt(bonesOffer)}), () => { S.chest += bonesOffer; S.bones = 0; goHall(); }, {sub: t(winter ? 'wh.bonesWinter' : 'wh.bonesSub', {v: fmt(S.bones)}), cls: winter ? 'pri' : ''}) : ''}</div>`

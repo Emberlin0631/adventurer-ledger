@@ -42,7 +42,7 @@ function applyGrowth(M, ps, amounts, success) {
     migrateMember(m);
     const amt = amounts.get(m) || 0;
     m.purse += amt;
-    let gain = Math.round(base * mult * (traitOf(m) === 'veteran' ? 1.2 : 1));
+    let gain = Math.round(base * mult * (traitOf(m) === 'veteran' ? 1.2 : 1) * (1 + 0.1 * baseLv('training')));
     if ((M.serious || []).includes(m)) gain += 5;        // 撐過重傷也是經驗
     const credited = (M.credit || []).includes(m.nk);
     if (credited) gain = Math.round(gain * 1.5);          // 專業表現：負責的對策做到了

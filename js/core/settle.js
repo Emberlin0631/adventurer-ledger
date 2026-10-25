@@ -5,7 +5,7 @@ function deathChecks(M) {
   const out = [], dead = [], cfg = DIFFS[S.diff || 'std'];
   [...new Set(M.serious || [])].forEach(m => {
     if (m.key === 'cap' && !cfg.capDies) return;
-    let p = (cfg.death + 0.02 * ((M.D || 1) - 1)) * (capSkill('medic') ? 0.85 : 1), saved = false;
+    let p = (cfg.death + 0.02 * ((M.D || 1) - 1)) * (capSkill('medic') ? 0.85 : 1) * [1, 1, 0.85, 0.7][baseLv('infirmary')], saved = false;
     const master = perk('heal');   // Lv3 治療者：更會處理重傷，沒有材料也能處理
     if (has('heal') && m.key !== 'heal' && S.inv.healmat > 0) { S.inv.healmat--; p *= master ? 0.25 : 0.4; saved = true; }
     else if (master && m.key !== 'heal') { p *= 0.6; saved = true; }
@@ -83,6 +83,7 @@ function settle(o) {
       else { addLoyT(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoyT(m, -4); }
     });
     const glog = applyGrowth(M, ps, amounts, !o.resultKey || o.resultKey === 'res.ok');
+    if (baseLv('infirmary') >= 3) S.members.forEach(m => { if (m.hp === 1) m.hp = 0; });   // 醫務室三級：輕傷回來就痊癒
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; if (m.restNext) m.restNext = false; else m.hp = 1; } });
     if (deaths.dead.length) {
       deaths.dead.forEach(m => S.fallen.push({nk: m.nk, key: m.key, y: S.year, day: S.day, earned: Math.round(m.earned)}));

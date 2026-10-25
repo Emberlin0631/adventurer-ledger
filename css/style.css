@@ -191,3 +191,17 @@ details.fire summary:focus-visible{outline:2px solid var(--brass);outline-offset
 .skill{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
 .skill .muted{grid-column:1;font-size:13px} .skill .btn,.skill .pill{grid-row:span 2;grid-column:2}
 .skill.on{border-color:var(--brass)}
+
+.rbar{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
+.rbar .trk{display:inline-block;width:90px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.rbar i{display:block;height:100%;background:var(--good)}
+.rbar.mid i{background:var(--brass)} .rbar.bad i{background:var(--bad)}
+.rbar b{font-variant-numeric:tabular-nums}
+.remind ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
+.remind li.bad{color:var(--bad)} .remind li.warn{color:var(--brass)} .remind li.good{color:var(--good)} .remind li.info{color:var(--muted)}
+.facgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:8px}
+.fac{display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:8px;align-content:start}
+.fac .pips{color:var(--brass);letter-spacing:2px}
+.basepanel summary,.panel>summary{cursor:pointer}
+.mslist{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px} .mslist li.ok b{color:var(--good)}
+.stack{display:grid;gap:10px}

@@ -1,5 +1,4 @@
 /* 隨機委託流程：公告 → 情報與鑑定 → 報價與條款 → 採購 → 旅途事件 → 抵達（情報可能有誤）→ 戰鬥 → 結算 */
-const RC_BOARD_SIZE = 5;
 const placeName = i => t('place.' + i);
 const tagName = k => t('tag.' + k + '.n');
 const rcTags = c => RC[c.id].tags.concat(c.hidden ? [c.hidden] : []);
@@ -13,7 +12,7 @@ function fillBoard() {
     S.board.unshift({uid: S.uidSeq++, id: 'charter', place: 9, bounty: b, stated: 4, trueN: 4, hidden: null, days: 2, D: 1, competitor: b, gearReward: false});
   }
   let guard = 0;
-  while (S.board.length < RC_BOARD_SIZE && guard++ < 30) {
+  while (S.board.length < boardSize() && guard++ < 30) {
     const c = genContract();
     if (!S.board.some(x => x.id === c.id)) S.board.push(c); else S.uidSeq--;
   }
@@ -43,7 +42,7 @@ function rcIntel(c) {
         const h = known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
         if (T.req) h.push([reqMet(T.req), t('rc.reqHint', {req: reqText(T.req)}), true]);
         const est = rcEstimate(c);
-        h.push([est >= 0.7, t('rc.est', {n: Math.round(est * 100)}), true]);
+        h.push([est >= 0.7, t('rc.est', {bar: riskBar(est)}), true]);
         return h;
       },
       go: rcGo, back: null, cancel: true,
@@ -53,7 +52,7 @@ function rcIntel(c) {
   const target = n => t(`rc.${c.id}.target`, {n});
   const disc = c.trueN > c.stated || !!c.hidden;
   const justified = M.scouted && disc;
-  const scoutCost = perk('scout') || capSkill('eye') ? 0 : 10 + 5 * c.D;   // Lv3 偵查手自己去看
+  const scoutCost = perk('scout') || capSkill('eye') ? 0 : Math.round((10 + 5 * c.D) * (baseLv('intel') >= 2 ? 0.5 : 1));   // Lv3 偵查手自己去看
   const bids = {low: Math.round(c.bounty * 0.85 / 10) * 10, std: c.bounty, high: Math.round(c.bounty * 1.3 / 10) * 10};
   const accept = kind => () => {
     let p = {low: 1, std: 0.85, high: justified ? 0.85 : capSkill('haggle') ? 0.55 : 0.3}[kind];
@@ -69,7 +68,7 @@ function rcIntel(c) {
       return;
     }
     M.bounty = bids[kind]; M.escrow = bids[kind];
-    if (M.wantAdv) { M.advance = Math.round(M.bounty * 0.2 / 10) * 10; S.chest += M.advance; }
+    if (M.wantAdv) { M.advance = Math.round(M.bounty * (hasMs('succ30') ? 0.3 : 0.2) / 10) * 10; S.chest += M.advance; }
     M.priced = kind === 'high' && justified;
     market();
   };
@@ -81,7 +80,7 @@ function rcIntel(c) {
      <li>${t('rc.compet', {n: fmt(c.competitor)})}</li>
      ${T.req ? `<li class="${reqMet(T.req) ? 'ok' : 'warn'}">${t(reqMet(T.req) ? 'rc.reqYes' : 'rc.reqNo', {req: reqText(T.req)})}</li>` : ''}
      ${c.gearReward ? `<li class="new">${t('rc.gearRewardB')}</li>` : ''}
-     <li>${t('rc.estIntel', {n: Math.round(rcEstimate(c) * 100)})}</li>
+     <li>${t('rc.estIntel', {bar: riskBar(rcEstimate(c))})}</li>
      ${M.scouted ? (disc ? `${c.trueN > c.stated ? `<li class="new">${t('rc.scoutTrue', {target: target(c.trueN)})}</li>` : ''}${c.hidden ? `<li class="new">${t('rc.sch.' + c.hidden)}</li>` : ''}` : `<li class="new">${t('rc.scoutClean')}</li>`) : ''}
    </ul>
    ${M.scouted ? '' : B(t('btn.scout'), () => { if (S.chest < scoutCost) return toast(t('toast.noMoney')); spend(scoutCost); M.scouted = true; creditRole(['scout']); rcIntel(c); }, {sub: scoutCost ? t('rc.scoutSub', {n: scoutCost}) : t('rc.scoutFree', {name: nm(participants().find(m => m.key === 'scout'))})})}</div>
