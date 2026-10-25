@@ -1,6 +1,6 @@
 /* 結算帳：工會費 → 預支 → 戰利品與扣項 → 返還支出 → 提撥儲備 → 依份額分紅
    o: {titleKey|title, bounty, loot:[[label, amt]], ded:[[label, amt]], introKey, noteKey|note, resultKey, after} */
-/* 重傷致死判定：治療者帶高階材料能在 12 小時內處理，大幅降低機率 */
+/* 重傷致死判定：治療者帶高階材料能及時處理，大幅降低機率 */
 function deathChecks(M) {
   const out = [], dead = [], cfg = DIFFS[S.diff || 'std'];
   [...new Set(M.serious || [])].forEach(m => {
