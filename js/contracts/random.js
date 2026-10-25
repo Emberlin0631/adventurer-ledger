@@ -82,7 +82,7 @@ function rcIntel(c) {
      ${T.req ? `<li class="${reqMet(T.req) ? 'ok' : 'warn'}">${t(reqMet(T.req) ? 'rc.reqYes' : 'rc.reqNo', {req: reqText(T.req)})}</li>` : ''}
      ${c.gearReward ? `<li class="new">${t('rc.gearRewardB')}</li>` : ''}
      <li>${t('rc.estIntel', {n: Math.round(rcEstimate(c) * 100)})}</li>
-     ${M.scouted ? (disc ? `${c.trueN > c.stated ? `<li class="new">${t('rc.scoutTrue', {target: target(c.trueN)})}</li>` : ''}${c.hidden ? `<li class="new">${t('rc.scoutHidden', {tag: tagName(c.hidden)})}</li>` : ''}` : `<li class="new">${t('rc.scoutClean')}</li>`) : ''}
+     ${M.scouted ? (disc ? `${c.trueN > c.stated ? `<li class="new">${t('rc.scoutTrue', {target: target(c.trueN)})}</li>` : ''}${c.hidden ? `<li class="new">${t('rc.sch.' + c.hidden)}</li>` : ''}` : `<li class="new">${t('rc.scoutClean')}</li>`) : ''}
    </ul>
    ${M.scouted ? '' : B(t('btn.scout'), () => { if (S.chest < scoutCost) return toast(t('toast.noMoney')); spend(scoutCost); M.scouted = true; creditRole(['scout']); rcIntel(c); }, {sub: scoutCost ? t('rc.scoutSub', {n: scoutCost}) : t('rc.scoutFree', {name: nm(participants().find(m => m.key === 'scout'))})})}</div>
    <div class="panel"><h4>${t('rc.bid')}</h4><div class="choices">
@@ -169,7 +169,7 @@ function rcArrive(X) {
   }
   const parts = [];
   if (c.trueN > c.stated) parts.push(t('rc.wrong.count', {a: target(c.stated), b: target(c.trueN)}));
-  if (c.hidden) parts.push(t('rc.wrong.hidden', {tag: tagName(c.hidden)}));
+  if (c.hidden) parts.push(t('rc.hid.' + c.hidden));
   const opts = [];
   if (M.clause) opts.push({label: t('rc.o.reneg'), sub: t('rc.o.renegSub', {n: M.rationRate * 2}), cls: 'pri', fn: () => {
     spend(M.rationRate * 2); S.day += 2;
