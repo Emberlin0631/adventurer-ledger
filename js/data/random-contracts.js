@@ -16,6 +16,14 @@ const RC = {
   bridge:   {monster: 'troll',     biome: 'road',   base: 340,  days: 2, danger: 2, count: [1, 2], tags: ['armor', 'ambush'],      hidden: ['far']},
   sinkhole: {monster: 'worm',      biome: 'mine',   base: 480,  days: 3, danger: 2, count: [2, 3], tags: ['under', 'poison'],      hidden: ['curse']},
   orchard:  {monster: 'treant',    biome: 'forest', base: 400,  days: 3, danger: 2, count: [2, 3], tags: ['fire', 'far'],          hidden: ['curse']},
+  ferry:    {monster: 'serpent',   biome: 'harbor', base: 460,  days: 3, danger: 2, count: [1, 2], tags: ['flood', 'fire'],      hidden: ['armor']},
+  pass:     {monster: 'frostwolf', biome: 'snow',   base: 430,  days: 4, danger: 2, count: [4, 6], tags: ['far', 'ambush'],        hidden: ['curse']},
+  ruins:    {monster: 'ghoul',     biome: 'cellar', base: 360,  days: 3, danger: 1, count: [3, 5], tags: ['rot', 'under'],         hidden: ['curse']},
+  clan:     {monster: 'troll',     biome: 'forest', base: 540,  days: 4, danger: 2, count: [2, 3], tags: ['armor', 'ambush'],      hidden: ['far'], req: {front: 1}},
+  wells:    {monster: 'toad',      biome: 'swamp',  base: 280,  days: 2, danger: 1, count: [3, 5], tags: ['poison'],               hidden: ['far']},
+  graves:   {monster: 'ghoul',     biome: 'grave',  base: 340,  days: 3, danger: 1, count: [3, 5], tags: ['rot', 'curse'],         hidden: ['ambush']},
+  smuggler: {monster: 'bandit',    biome: 'harbor', base: 330,  days: 2, danger: 1, count: [3, 5], tags: ['armor'],                hidden: ['ambush']},
+  statue:   {monster: 'lizard',    biome: 'cellar', base: 540,  days: 3, danger: 2, count: [1, 2], tags: ['petrify', 'curse'],     hidden: ['ambush']},
   wyvern:   {monster: 'manticore', biome: 'road',   base: 1100, days: 6, danger: 4, count: [1, 1], tags: ['poison', 'fire', 'loot'], hidden: ['armor'], minYear: 1, req: {front: 3}},
 };
 const PLACE_COUNT = 12;
