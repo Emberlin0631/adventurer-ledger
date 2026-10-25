@@ -225,6 +225,8 @@ window.LANG_EN = {
   'rc.sch.curse':'Assessor: signs of a curse on the site (not on the notice)',
   'rc.sch.ambush':'Assessor: they may have set an ambush nearby (not on the notice)',
   'rc.sch.armor':'Assessor: they are well armed, so it will be a hard fight (not on the notice)',
+  'hall.rest':'Rest for a day',
+  'hall.restSub':'Light wounds heal and the board gets new notices; lodging {n} silver, and the day still counts',
   'ev.heal.title':'The temple infirmary is hiring',
   'ev.heal.lede':'The northern temple is expanding its infirmary, offering a fixed monthly stipend, room, board and supplies. Martin has received an invitation. With the party, his income depends on jobs succeeding and he has to walk into dangerous places; at the temple, he gets paid every month.',
   'ev.heal.quote':'Friendship matters, but it doesn\'t pay rent. He has a steadier "other path" than you do; you\'ll need a real reason for him to stay.',

@@ -42,6 +42,7 @@ function goHall() {
     ${dues ? `<div class="panel"><h4>${t('dues.title')}</h4><p>${t('dues.body', {n: fmt(dues), m: S.members.length})}</p></div>` : ''}
     <div class="row" style="justify-content:space-between"><h2>${t('hall.board')}</h2><div class="row"><span class="muted">${t('hall.inv', {x: invText() || t('hall.none')})}</span>${B(t('ms.open'), membersScreen, {cls: 'ghost'})}</div></div>
     <div class="board">${notices.join('')}</div>
+    <div class="row">${B(t('hall.rest'), restDay, {cls: 'ghost', sub: t('hall.restSub', {n: restCost()}), dis: S.chest < restCost()})}</div>
     <p class="muted">${t('hall.next', {d: SEASON_DAYS - (S.day - 1) % SEASON_DAYS, n: fmt(seasonDues())})}</p>
     ${mainlinePanel()}
     ${sick.length ? `<div class="panel"><h4>${t('hall.sick.title')}</h4><p class="muted">${t('hall.sick.body')}</p><div class="row">${sick.map(m => B(t('hall.sick.btn', {name: nm(m)}), () => {
@@ -55,6 +56,16 @@ function goHall() {
       clearSave(); startScreen();
     }, {cls: 'ghost' + (newGameArmed ? ' danger' : '')})}</div>`;
   });
+}
+/* 休息一日：輕傷痊癒，公告板換一批新委託；付住宿費，日子照過（離換季的帳單又近一天） */
+const restCost = () => 3 * S.members.length;
+function restDay() {
+  const c = restCost();
+  if (S.chest < c) return toast(t('toast.noMoney'));
+  S.chest -= c; S.day += 1;
+  S.members.forEach(m => { if (m.hp === 1) m.hp = 0; });
+  S.board = [];
+  goHall();
 }
 function invText() {
   const parts = INVKEYS.filter(k => S.inv[k]).map(k => `${t('inv.' + k)}×${S.inv[k]}`);
