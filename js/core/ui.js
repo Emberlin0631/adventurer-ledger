@@ -30,9 +30,12 @@ function screen(fn) {
   CUR = typeof fn === 'function' ? fn : null;
   COACH_LAST = null;
   clearReg();
+  const y = window.scrollY, oldTitle = ($('#main h2') || {}).textContent;
   $('#main').innerHTML = CUR ? CUR() : (fn || '');
   renderHUD();
-  window.scrollTo({top: 0, behavior: RM ? 'auto' : 'smooth'});
+  // 同一個畫面內的刷新（加減採購、切換條款）留在原位；換到新畫面才回到頂端
+  const same = oldTitle && ($('#main h2') || {}).textContent === oldTitle;
+  window.scrollTo(same ? {top: y, behavior: 'auto'} : {top: 0, behavior: RM ? 'auto' : 'smooth'});
 }
 function rerender() {
   renderHUD();

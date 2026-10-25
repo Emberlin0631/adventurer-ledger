@@ -21,7 +21,7 @@ function m1Intel() {
   if (!S.M || S.M.id !== 'm1') newMission({
     id: 'm1', D: 1, nameKey: 'm1.name', bounty: M1_BOUNTY, rationDays: 5, away: [],
     market: ['crystal', 'repair', 'healmat', 'horses'], stock: {},
-    hints: () => [[has('mage') && (S.inv.crystal >= 1 || perk('mage')), 'm1.h1'], [S.M.svc.repair, 'm1.h2'], [mlHealer(), 'm1.h3']],
+    hints: () => { S.M.rationDays = S.M.svc.horses ? 5 : 7; return [[has('mage') && (S.inv.crystal >= 1 || perk('mage')), 'm1.h1'], [S.M.svc.repair, 'm1.h2'], [mlHealer(), 'm1.h3']]; },
     go: m1Go, back: m1Intel, cancel: true,
   });
   const M = S.M;

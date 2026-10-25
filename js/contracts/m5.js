@@ -12,7 +12,7 @@ function m5Intel() {
       id: 'm5', D: 3, nameKey: 'm5.name', bounty: 0, rationDays: 5, rationRate: 6,
       pledges: places.map((p, i) => ({p, amt: amts[i]})), waited: false, mode: null,
       market: ['horses', 'crystal', 'healmat', 'repair'], stock: {},
-      hints: () => [[mlScout(), 'm5.h1'], [has('mage') && (S.inv.crystal >= 1 || perk('mage')), 'm5.h2'], [S.M.svc.horses, 'm5.h3'], [mlHealer(), 'm5.h4']],
+      hints: () => { S.M.rationDays = S.M.svc.horses ? 5 : 7; return [[mlScout(), 'm5.h1'], [has('mage') && (S.inv.crystal >= 1 || perk('mage')), 'm5.h2'], [S.M.svc.horses, 'm5.h3'], [mlHealer(), 'm5.h4']]; },
       go: m5Go, back: m5Intel, cancel: true,
     });
   }
