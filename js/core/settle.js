@@ -19,6 +19,7 @@ function deathChecks(M) {
 function settle(o) {
   const M = S.M; screen('');
   const deaths = deathChecks(M);
+  if (S.flags.patronLeft > 0 && o.bounty > 0) { o.ded = (o.ded || []).concat([[t('ev.patron.line'), Math.round(o.bounty * 0.15)]]); S.flags.patronLeft--; }   // 贊助人的分成
   const fee = Math.round((o.bounty || 0) * 0.05);
   const adv = M.advance || 0;
   const loot = (o.loot || []).reduce((a, l) => a + l[1], 0), ded = (o.ded || []).reduce((a, l) => a + l[1], 0);

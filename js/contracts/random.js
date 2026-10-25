@@ -117,6 +117,34 @@ const TRAVEL_EVENTS = {
     {label: t('tv.trav.c'), fn: X.resume},
   ]),
 };
+TRAVEL_EVENTS.fog = X => {
+  const guide = has('scout') || has('tracker');
+  card(t('tv.fog.t'), t('tv.fog.b'), guide
+    ? [{label: t('tv.fog.a'), cls: 'pri', fn: () => { creditRole(['scout', 'tracker']); card(t('tv.fog.t'), res([['g', t('tv.fog.aR')]]), [cont(X)]); }}]
+    : [{label: t('tv.fog.b2'), sub: t('tv.oneDay', {n: S.M.rationRate}), fn: () => { spend(S.M.rationRate); X.days++; card(t('tv.fog.t'), res([t('tv.fog.b2R')]), [cont(X)]); }},
+       {label: t('tv.fog.c'), sub: t('tv.fog.cSub'), fn: () => { const m = rnd() < 0.5 ? injure(1) : null; card(t('tv.fog.t'), res([m ? ['w', t('tv.fog.hurt', {name: nm(m)})] : ['g', t('tv.fog.ok')]]), [cont(X)]); }}]);
+};
+TRAVEL_EVENTS.peddler = X => {
+  const price = Math.max(5, Math.round(priceOf('antidote') * 0.6));
+  card(t('tv.ped.t'), t('tv.ped.b'), [
+    {label: t('tv.ped.a', {n: price}), sub: t('tv.ped.aSub'), dis: S.chest < price, fn: () => {
+      spend(price);
+      if (rnd() < 0.65) { S.inv.antidote++; card(t('tv.ped.t'), res([['g', t('tv.ped.aOk')]]), [cont(X)]); }
+      else card(t('tv.ped.t'), res([['b', t('tv.ped.aBad')]]), [cont(X)]);
+    }},
+    {label: t('tv.ped.b2'), fn: X.resume},
+  ]);
+};
+TRAVEL_EVENTS.rain = X => {
+  card(t('tv.rain.t'), t('tv.rain.b'), [
+    {label: t('tv.rain.a'), sub: silver(12), dis: S.chest < 12, fn: () => { spend(12); card(t('tv.rain.t'), res([t('tv.rain.aR')]), [cont(X)]); }},
+    {label: t('tv.rain.b2'), sub: t('tv.rain.b2Sub'), fn: () => {
+      const owned = ['crystal', 'antidote', 'healmat'].filter(k => S.inv[k] > 0);
+      if (rnd() < 0.5 && owned.length) { const k = pick(owned); S.inv[k]--; card(t('tv.rain.t'), res([['b', t('tv.rain.bad', {item: t('inv.' + k)})]]), [cont(X)]); }
+      else card(t('tv.rain.t'), res([['g', t('tv.rain.ok')]]), [cont(X)]);
+    }},
+  ]);
+};
 const cont = X => ({label: t('btn.continue'), fn: X.resume});
 
 function rcGo() {

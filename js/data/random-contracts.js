@@ -13,6 +13,9 @@ const RC = {
   harpies:  {monster: 'goose',     biome: 'road',   base: 520,  days: 5, danger: 2, count: [4, 6], tags: ['fire', 'far'],          hidden: ['curse'], req: {role: 'mage', lv: 3}},
   mine:     {monster: 'lizard',    biome: 'mine',   base: 650,  days: 3, danger: 3, count: [1, 2], tags: ['petrify', 'under'],     hidden: ['armor'], req: {front: 2}},
   charter:  {monster: 'bandit',    biome: 'harbor', base: 380,  days: 2, danger: 1, count: [3, 5], tags: ['ambush'],               hidden: [], special: true},
+  bridge:   {monster: 'troll',     biome: 'road',   base: 340,  days: 2, danger: 2, count: [1, 2], tags: ['armor', 'ambush'],      hidden: ['far']},
+  sinkhole: {monster: 'worm',      biome: 'mine',   base: 480,  days: 3, danger: 2, count: [2, 3], tags: ['under', 'poison'],      hidden: ['curse']},
+  orchard:  {monster: 'treant',    biome: 'forest', base: 400,  days: 3, danger: 2, count: [2, 3], tags: ['fire', 'far'],          hidden: ['curse']},
   wyvern:   {monster: 'manticore', biome: 'road',   base: 1100, days: 6, danger: 4, count: [1, 1], tags: ['poison', 'fire', 'loot'], hidden: ['armor'], minYear: 1, req: {front: 3}},
 };
 const PLACE_COUNT = 12;
@@ -87,7 +90,7 @@ function genContract() {
   const D = T.danger + Math.floor((year - 1) * 0.6);
   const scale = 1 + 0.3 * (year - 1);
   const r10 = n => Math.round(n / 10) * 10;
-  const bounty = r10(T.base * scale * (0.9 + rnd() * 0.25));
+  const bounty = r10(T.base * scale * (0.9 + rnd() * 0.25) * ((S.flags.cartel || -1) > S.seasonIdx ? 1.1 : 1));   // 價格同盟期間報酬 +10%
   const stated = T.count[0] + Math.floor(rnd() * (T.count[1] - T.count[0] + 1));
   const trueN = Math.max(stated, Math.round(stated * pick([1, 1, 1, 1.5, 2])));
   const hidden = T.hidden.length && rnd() < 0.45 ? pick(T.hidden) : null;
