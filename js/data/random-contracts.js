@@ -86,9 +86,7 @@ const GEAR_REWARD_TPL = ['escort', 'bandits', 'mine', 'crypt'];
 function genContract() {
   const year = S.year;
   const ids = Object.keys(RC).filter(id => !RC[id].special && ((RC[id].minYear || 0) < year || RC[id].danger <= 3));
-  // 小隊還沒滿 5 人的第一年：只出危險度 1 的委託，讓新手有機會站穩腳步
-  const early = year === 1 && S.members.length < MAINLINE_MIN;
-  const id = pick(early ? ids.filter(k => RC[k].danger <= 1) : ids), T = RC[id];
+  const id = pick(ids), T = RC[id];
   const D = T.danger + Math.floor((year - 1) * 0.6);
   const scale = 1 + 0.3 * (year - 1);
   const r10 = n => Math.round(n / 10) * 10;

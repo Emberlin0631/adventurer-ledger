@@ -1,5 +1,5 @@
 /* 隨機委託流程：公告 → 情報與鑑定 → 報價與條款 → 採購 → 旅途事件 → 抵達（情報可能有誤）→ 戰鬥 → 結算 */
-const RC_BOARD_SIZE = 3;
+const RC_BOARD_SIZE = 5;
 const placeName = i => t('place.' + i);
 const tagName = k => t('tag.' + k + '.n');
 const rcTags = c => RC[c.id].tags.concat(c.hidden ? [c.hidden] : []);
