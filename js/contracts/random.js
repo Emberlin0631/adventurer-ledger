@@ -61,6 +61,7 @@ function rcIntel(c) {
     if (M.wantAdv && S.rep < 60) p -= 0.15;
     if (kind !== 'low') p += (S.rep - 50) / 200;   // 聲望好，委託人比較好說話
     if (kind !== 'low' && perk('cap')) p += 0.1;      // Lv3 隊長會談
+    if (!S.records.length && kind !== 'high') p = 1;   // 第一張委託保證成交，別讓新手一開局就被搶單
     removeFromBoard(c);
     if (rnd() > p) {
       const keep = M.spent; S.M = null;
@@ -163,7 +164,7 @@ function rcArrive(X) {
   const target = n => t(`rc.${c.id}.target`, {n});
   const disc = c.trueN > c.stated || !!c.hidden;
   if (!disc || M.priced) {
-    card(t('rc.arrive'), `<p>${t('rc.arriveB', {target: target(c.trueN)})}</p>`, [{label: t('btn.fight'), cls: 'pri', fn: () => battle(X, () => rcFight(X, 0))}]);
+    card(t('rc.arrive'), `<p>${t('rc.arriveB', {target: target(c.trueN)})}</p>`, [{label: t('btn.fight'), cls: 'pri', fn: () => rcTactic(X, 0)}]);
     return;
   }
   const parts = [];
@@ -173,9 +174,9 @@ function rcArrive(X) {
   if (M.clause) opts.push({label: t('rc.o.reneg'), sub: t('rc.o.renegSub', {n: M.rationRate * 2}), cls: 'pri', fn: () => {
     spend(M.rationRate * 2); S.day += 2;
     M.bounty = Math.round(M.bounty * 1.5 / 10) * 10; M.escrow = M.bounty; renderHUD();
-    card(t('rc.o.reneg'), res([['g', t('rc.reneg.res', {n: fmt(M.bounty)})]]), [{label: t('btn.fight'), cls: 'pri', fn: () => battle(X, () => rcFight(X, 0.1))}]);
+    card(t('rc.o.reneg'), res([['g', t('rc.reneg.res', {n: fmt(M.bounty)})]]), [{label: t('btn.fight'), cls: 'pri', fn: () => rcTactic(X, 0.1)}]);
   }});
-  opts.push({label: t('rc.o.push'), sub: t('rc.o.pushSub'), fn: () => { riskyChoice(); battle(X, () => rcFight(X, 0)); }});
+  opts.push({label: t('rc.o.push'), sub: t('rc.o.pushSub'), fn: () => { riskyChoice(); rcTactic(X, 0); }});
   opts.push({label: t('rc.o.quit'), sub: M.clause ? t('rc.o.quitSubC') : t('rc.o.quitSubN'), fn: () => {
     if (!M.clause) S.rep -= 10;
     rcFinish();
@@ -183,6 +184,21 @@ function rcArrive(X) {
       introKey: M.clause ? 'rc.withdrawIntro' : 'rc.forfIntro', loot: M.extraLoot});
   }});
   card(t('rc.wrong.title'), `<p>${parts.join(' ')}</p>`, opts);
+}
+/* 開打前的戰術選擇：每種有不同的加成與代價，結果仍由機率決定 */
+function rcTactic(X, bonus) {
+  const ps = participants().filter(m => m.hp < 2);
+  const scout = ps.find(m => ['scout', 'tracker'].includes(m.key));
+  const front = ps.find(m => ['tank', 'trainee'].includes(m.key)) || ps.find(m => m.key === 'cap' && tierOf(m) >= 1);
+  const mage = ps.find(m => m.key === 'mage');
+  const go = (b, fn) => () => { if (fn) fn(); battle(X, () => rcFight(X, bonus + b)); };
+  const opts = [];
+  if (scout) opts.push({label: t('tac.scout', {name: nm(scout)}), sub: t('tac.scoutSub'), fn: go(0.05, () => { creditRole(['scout', 'tracker']); if (rnd() < 0.25) hurt(scout, 1); })});
+  if (front) opts.push({label: t('tac.front', {name: nm(front)}), sub: t('tac.frontSub'), fn: go(0.04, () => { creditRole(['tank', 'trainee']); if (rnd() < 0.3) hurt(front, 1); })});
+  if (mage && S.inv.crystal >= 1) opts.push({label: t('tac.mage', {name: nm(mage)}), sub: t('tac.mageSub'), fn: go(0.08, () => { S.inv.crystal--; creditRole(['mage']); })});
+  opts.push({label: t('tac.rush'), sub: t('tac.rushSub'), fn: go(0.06, () => { riskyChoice(); if (rnd() < 0.4) injure(1); })});
+  opts.push({label: t('tac.steady'), sub: t('tac.steadySub'), cls: 'pri', fn: go(0)});
+  card(t('tac.title'), `<p>${t('tac.body')}</p>`, opts);
 }
 function rcFight(X, bonus) {
   const M = S.M, c = M.rc, L = [];

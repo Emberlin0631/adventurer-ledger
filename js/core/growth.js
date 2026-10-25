@@ -69,6 +69,7 @@ function growthReport(log, next) {
     <div class="growth">${log.map(e => {
       const m = e.m, pct = nextXP(m) == null ? 100 : Math.round((m.xp - XP_LEVELS[lvOf(m) - 1]) / (nextXP(m) - XP_LEVELS[lvOf(m) - 1]) * 100);
       const lines = [];
+      if (e.mood) { const k2 = `rx.${e.mood}.${traitOf(m)}`, k = LANGS['zh-Hant'][k2] ? k2 : 'rx.' + e.mood; lines.push([e.mood === 'poor' || e.mood === 'none' ? 'w' : e.mood === 'great' ? 'g' : '', t(k, {name: nm(m)})]); }
       if (e.credited) lines.push(t('gr.credit'));
       if (e.lvUp) lines.push(['g', t('gr.lvUp', {lv: e.lvUp})]);
       if (e.lvUp === 3 && !e.grad) lines.push(['g', t('gr.perk', {perk: t('perk.' + m.key)})]);

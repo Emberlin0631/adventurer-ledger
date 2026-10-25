@@ -73,16 +73,17 @@ function settle(o) {
     S.chest += reimb + reserve;
     if (pool < 0) S.chest += pool;   // 沒拿到賞金卻已預支：從錢箱償還
     const perDay = tot ? dist / tot / days : 0;   // 每份額每天拿到多少
-    const amounts = new Map();
+    const amounts = new Map(), moods = new Map();
     ps.forEach(m => {
       const amt = tot ? dist * m.share / tot : 0; m.earned += amt; m.earnedY = (m.earnedY || 0) + amt;
       let net = amt;
       if (m.debt) { const d = Math.min(m.debt, Math.floor(amt)); m.debt -= d; S.chest += d; net -= d; }   // 先前預支，從分紅扣回錢箱
       amounts.set(m, Math.round(net));   // 分紅進成員自己的錢包
       if (m.key === 'cap') { S.yours += amt; S.yoursY += amt; }
-      else { addLoyT(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoyT(m, -4); }
+      else { addLoyT(m, perDay >= 8 ? 4 : perDay >= 4 ? 2 : perDay >= 2 ? 0 : -4); if (m.hp === 2) addLoyT(m, -4); moods.set(m, dist <= 0 ? 'none' : perDay >= 8 ? 'great' : perDay >= 4 ? 'good' : perDay >= 2 ? 'ok' : 'poor'); }
     });
     const glog = applyGrowth(M, ps, amounts, !o.resultKey || o.resultKey === 'res.ok');
+    glog.forEach(e => { e.mood = moods.get(e.m); });
     if (baseLv('infirmary') >= 3) S.members.forEach(m => { if (m.hp === 1) m.hp = 0; });   // 醫務室三級：輕傷回來就痊癒
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; if (m.restNext) m.restNext = false; else m.hp = 1; } });
     if (deaths.dead.length) {
