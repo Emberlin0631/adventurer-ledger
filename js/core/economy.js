@@ -25,7 +25,7 @@ const inflation = () => 1 + 0.05 * ((S.year || 1) - 1);
 function priceOf(k) {
   const it = ITEMS[k];
   if (it.svc) return Math.round(it.price * inflation() * (k === 'horses' ? [1, 0.5, 0, 0][baseLv('stable')] : 1));
-  return Math.round(it.price * (S.mkt ? S.mkt.price[k] : 1) * inflation());
+  return Math.round(it.price * (S.mkt ? S.mkt.price[k] : 1) * inflation() * ((k === 'crystal' && spec('craft')) || (k === 'healmat' && spec('herb')) ? 0.75 : 1));
 }
 const sellRate = () => SELL_RATE + 0.1 * baseLv('warehouse');
 const sellPriceOf = k => Math.round(priceOf(k) * sellRate());

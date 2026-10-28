@@ -13,12 +13,11 @@ const tierOf = m => m.tier || 0;
 function lvFromXP(xp) { let lv = 1; XP_LEVELS.forEach((need, i) => { if (xp >= need) lv = i + 1; }); return Math.min(LV_MAX, lv); }
 const nextXP = m => lvOf(m) >= LV_MAX ? null : XP_LEVELS[lvOf(m)];
 const gearCost = m => tierOf(m) >= GEAR_MAX ? null : Math.round(GEAR_COST[tierOf(m)] * inflation());
-const perk = (key, minLv = 3) => participants().some(m => m.key === key && m.hp < 2 && lvOf(m) >= minLv);
 
 /* 對整隊的影響 */
 function growthBonus() {
   const b = participants().reduce((a, m) => a + (lvOf(m) - 1) * 0.01 + tierOf(m) * 0.01, 0);
-  return Math.min(0.12, b) + (capSkill('tactics') ? 0.03 : 0);
+  return Math.min(0.12, b) + (capSkill('tactics') ? 0.03 : 0) + (spec('mark') ? 0.04 : 0);
 }
 /* 對個人的影響：等級與裝備都讓人比較不容易被打中 */
 const growthInjuryFactor = m => Math.pow(0.9, lvOf(m) - 1) * (1 - 0.15 * tierOf(m));
@@ -30,6 +29,7 @@ function migrateMember(m) {
   if (m.xp == null) m.xp = XP_LEVELS[m.lv - 1];
   if (m.tier == null) m.tier = 0;
   if (m.purse == null) m.purse = 0;
+  if (m.lv >= 3 && SPECS[m.key] && !m.spec && !(S.specQ || []).includes(m.nk)) m.spec = SPECS[m.key][0];   // 舊存檔：預設第一種
   return m;
 }
 
@@ -53,6 +53,7 @@ function applyGrowth(M, ps, amounts, success) {
     // 出師：見習生 Lv3 成為正式戰士；學徒治療者 Lv3 成為正式治療者
     if (m.lv >= 3 && m.key === 'trainee') { m.key = 'tank'; m.share = Math.max(m.share, 1); entry.grad = 'trainee'; }
     if (m.lv >= 3 && m.key === 'appr') { m.key = 'heal'; m.share = Math.max(m.share, 1.25); entry.grad = 'appr'; }
+    if (m.lv >= 3 && SPECS[m.key] && !m.spec) queueSpec(m);   // 到 Lv3：讓玩家選專長
     // 自行升級私人裝備
     const c = gearCost(m), margin = BUY_MARGIN[traitOf(m)] || 1.15;
     if (m.key !== 'cap' && c != null && m.purse >= c * margin) { m.purse -= c; m.tier++; entry.bought = m.tier; addLoy(m, 3); }
@@ -72,7 +73,7 @@ function growthReport(log, next) {
       if (e.mood) { const k2 = `rx.${e.mood}.${traitOf(m)}`, k = LANGS['zh-Hant'][k2] ? k2 : 'rx.' + e.mood; lines.push([e.mood === 'poor' || e.mood === 'none' ? 'w' : e.mood === 'great' ? 'g' : '', t(k, {name: nm(m)})]); }
       if (e.credited) lines.push(t('gr.credit'));
       if (e.lvUp) lines.push(['g', t('gr.lvUp', {lv: e.lvUp})]);
-      if (e.lvUp === 3 && !e.grad) lines.push(['g', t('gr.perk', {perk: t('perk.' + m.key)})]);
+      if (e.lvUp === 3 && !e.grad) lines.push(['g', SPECS[m.key] ? t('gr.specPick') : t('gr.perk', {perk: t('perk.' + m.key)})]);
       if (e.grad) lines.push(['g', t('gr.grad.' + e.grad, {name: nm(m)})]);
       if (e.bought) lines.push(['g', t('gr.bought', {name: nm(m), gear: gearName(m, e.bought)})]);
       return `<div class="gcard">${portrait(m)}<div class="gbody"><div class="row" style="gap:8px;justify-content:space-between"><b>${nm(m)}</b><span class="muted">${roleOf(m)}・Lv${lvOf(m)}</span></div>
@@ -98,7 +99,7 @@ function membersScreen() {
         <div class="kv num"><span>${t('ms.gear')}</span><span>${gearName(m)}${m.gear ? `＋${t('mem.gear')}` : ''}${m.ptier ? ` <span class="muted">${t('ms.party', {n: m.ptier})}</span>` : ''}</span></div>
         <div class="kv num"><span>${t('ms.purse')}</span><span>${silver(m.purse)}${c != null ? ` <span class="muted">${t('ms.next', {n: fmt(c)})}</span>` : ''}</span></div>
         <div class="kv num"><span>${t('ms.share')}</span><span>${m.share}・${t('ms.earned', {n: fmt(m.earned)})}</span></div>
-        <div class="kv"><span>${t('ms.perk')}</span><span class="${lvOf(m) >= 3 ? '' : 'muted'}">${t('perk.' + m.key)}${lvOf(m) >= 3 ? '' : ` ${t('ms.perkLock')}`}</span></div>
+        <div class="kv"><span>${t('ms.perk')}</span><span>${perkLine(m)}</span></div>
         ${c != null ? B(t('ms.fund', {n: fmt(c)}), () => partyFundGear(m), {cls: 'ghost', sub: t('ms.fundSub'), dis: S.chest < c}) : ''}
       </div></div>`;
     }).join('')}</div>`);

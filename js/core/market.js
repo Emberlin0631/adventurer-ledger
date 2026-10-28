@@ -3,7 +3,7 @@ function newMission(o) {
   S.M = Object.assign({spent: 0, svc: {}, bought: {}, stock: {}, advance: 0, escrow: 0, danger: false, rationRate: 5}, o);
 }
 function departFees() {
-  const M = S.M, f = [[t('fee.ration'), Math.round(M.rationDays * M.rationRate * (capSkill('thrift') ? 0.85 : 1) * (baseLv('stable') >= 3 ? 0.9 : 1)), t('fee.days', {n: M.rationDays})]];
+  const M = S.M, f = [[t('fee.ration'), Math.round(M.rationDays * M.rationRate * (capSkill('thrift') ? 0.85 : 1) * (baseLv('stable') >= 3 ? 0.9 : 1) * (spec('camp') ? 0.9 : 1)), t('fee.days', {n: M.rationDays})]];
   S.members.filter(m => m.hp === 2).forEach(m => f.push([t('fee.maint', {name: nm(m)}), 20, t('fee.maintSub')]));
   if (M.danger) {
     const h = mem('heal'), g = mem('mage'), k = mem('tracker');

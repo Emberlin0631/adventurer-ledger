@@ -84,7 +84,7 @@ function settle(o) {
     });
     const glog = applyGrowth(M, ps, amounts, !o.resultKey || o.resultKey === 'res.ok');
     glog.forEach(e => { e.mood = moods.get(e.m); });
-    if (baseLv('infirmary') >= 3) S.members.forEach(m => { if (m.hp === 1) m.hp = 0; });   // 醫務室三級：輕傷回來就痊癒
+    if (baseLv('infirmary') >= 3 || spec('field')) S.members.forEach(m => { if (m.hp === 1) m.hp = 0; });   // 醫務室三級：輕傷回來就痊癒
     S.members.forEach(m => { if (m.sitting) { m.sitting = false; if (m.restNext) m.restNext = false; else m.hp = 1; } });
     if (deaths.dead.length) {
       deaths.dead.forEach(m => S.fallen.push({nk: m.nk, key: m.key, y: S.year, day: S.day, earned: Math.round(m.earned)}));

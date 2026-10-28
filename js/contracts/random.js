@@ -38,7 +38,7 @@ function rcIntel(c) {
         const M = S.M;
         const known = T.tags.concat(M.scouted && c.hidden ? [c.hidden] : []);
         if (M.scouted && c.hidden) known.forEach(tag => TAGS[tag].items.forEach(i => { if (!M.market.includes(i)) M.market.push(i); }));
-        M.rationDays = Math.max(1, c.days + (known.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') ? 1 : 0));
+        M.rationDays = Math.max(1, c.days + (known.includes('far') && !M.svc.horses ? 2 : 0) - (perk('tracker') || spec('trail') ? 1 : 0));
         const h = known.map(tag => [tagReady(tag, c.D), t('tag.' + tag + '.h', {n: tagNeed(tag, c.D)}), true]);
         if (T.req) h.push([reqMet(T.req), t('rc.reqHint', {req: reqText(T.req)}), true]);
         const est = rcEstimate(c);
@@ -61,6 +61,7 @@ function rcIntel(c) {
     if (M.wantAdv && S.rep < 60) p -= 0.15;
     if (kind !== 'low') p += (S.rep - 50) / 200;   // 聲望好，委託人比較好說話
     if (kind !== 'low' && perk('cap')) p += 0.1;      // Lv3 隊長會談
+    if (kind === 'high' && spec('awe')) p += 0.1;      // 威懾：高價報價更容易成交
     if (!S.records.length && kind !== 'high') p = 1;   // 第一張委託保證成交，別讓新手一開局就被搶單
     removeFromBoard(c);
     if (rnd() > p) {
@@ -227,7 +228,7 @@ function rcFight(X, bonus) {
   if (rnd() < p) {
     L.push(['g', t('rc.f.win')]);
     if (RC[c.id].tags.includes('loot')) {
-      const base = RC[c.id].base * (1 + 0.3 * (S.year - 1)) * 0.5;
+      const base = RC[c.id].base * (1 + 0.3 * (S.year - 1)) * 0.5 * (spec('hunt') ? 1.15 : 1);
       if (M.svc.processor) { const v = Math.round(base / 10) * 10; loot.push([t('rc.lootProc'), v]); ded.push([t('rc.d.proc'), Math.round(v * 0.1)]); }
       else if (M.svc.porters) loot.push([t('rc.lootPort'), Math.round(base * 0.35 / 10) * 10]);
       else L.push(['w', t('rc.lootNone')]);
@@ -251,7 +252,8 @@ function rcFinish() { S.day += 1; }
 /* 成功率公式：戰鬥與預估共用 */
 function rcSuccessP(c, unc, ratio, bonus) {
   const healer = has('heal') || has('appr');
-  return Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + growthBonus() + bonus));
+  const burst = spec('burst') && RC[c.id] && RC[c.id].tags.includes('fire') ? 0.05 : 0;   // 爆發：要用火的委託更有把握
+  return Math.max(0.15, Math.min(0.97, 0.97 - 0.13 * unc - 0.12 * ratio - 0.04 * (c.D - 1) + (healer ? 0.04 : 0) + veteranBonus() + growthBonus() + burst + bonus));
 }
 /* 預估：只看已知情報（鑑定過才算進隱藏威脅與實際數量） */
 function rcEstimate(c) {

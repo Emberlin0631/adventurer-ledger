@@ -25,6 +25,7 @@ function injuryWeight(m) {
   if (tr === 'cautious') w *= 0.6;
   if (m.gear) w *= 0.5;
   w *= growthInjuryFactor(m);
+  if (spec('guard') && m.key !== 'tank') w *= 0.85;   // 守護：重裝戰士替大家擋傷
   return w;
 }
 function weightedPick(pool) {

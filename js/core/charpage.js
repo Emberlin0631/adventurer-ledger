@@ -32,7 +32,7 @@ function charScreen(m) {
       ${kv(t('ms.share'), `${m.share}・${t('ms.earned', {n: fmt(m.earned)})}`)}
       ${kv(t('ms.purse'), silver(m.purse))}
       ${kv(t('ms.gear'), `${gearName(m)}${m.gear ? `＋${t('mem.gear')}` : ''}${m.ptier ? ` <span class="muted">${t('ms.party', {n: m.ptier})}</span>` : ''}`)}
-      ${kv(t('ms.perk'), `<span class="${lvOf(m) >= 3 ? '' : 'muted'}">${t('perk.' + m.key)}${lvOf(m) >= 3 ? '' : ` ${t('ms.perkLock')}`}</span>`)}</div>`;
+      ${kv(t('ms.perk'), `<span>${perkLine(m)}</span>`)}</div>`;
 
     // 裝備：隊長手動決定用自己的錢還是錢箱升級；其他成員自動用自己的分紅買
     const gear = `<div class="panel"><h4>${t('cp.gearT')}</h4>
@@ -53,6 +53,6 @@ function charScreen(m) {
         ${have.length ? B(t('cp.respec', {n: RESPEC_COST}), () => { if (S.chest < RESPEC_COST) return toast(t('toast.noMoney')); S.chest -= RESPEC_COST; m.skills = []; charScreen(m); }, {cls: 'ghost', dis: S.chest < RESPEC_COST}) : ''}</div>`;
     }
     return `<div class="row" style="justify-content:flex-end">${B(t('cp.all'), membersScreen, {cls: 'ghost'})}${B(t('btn.backHall'), goHall)}</div>
-      <div class="split">${info}<div style="display:grid;gap:14px;align-content:start">${skills}${gear}</div></div>`;
+      <div class="split">${info}<div style="display:grid;gap:14px;align-content:start">${skills}${specPanel(m, charScreen)}${gear}</div></div>`;
   });
 }
